@@ -8,6 +8,7 @@ use crate::domain::project::Rdbms::Mysql;
 use crate::domain::project::{Project, ProjectId};
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ProjectJson {
     pub project_id: ProjectId,
     pub rdbms: String,
@@ -25,7 +26,7 @@ impl ProjectJson {
             project_id: project.project_id,
             name: project.name,
             rdbms: match project.rdbms {
-                Mysql => "mysql".to_string(),
+                Mysql => "MySQL".to_string(),
             },
             user: project.user,
             password: project.password,
@@ -40,7 +41,7 @@ impl ProjectJson {
             &self.project_id,
             &self.name,
             match self.rdbms.as_ref() {
-                "mysql" => Mysql,
+                "MySQL" => Mysql,
                 _ => unreachable!(),
             },
             &self.user,

@@ -1,24 +1,23 @@
 import { type FC, useState } from 'react'
-import styles from './ProjectSelect.module.scss'
+import styles from './ProjectList.module.scss'
 import { type Project } from '../../../types'
 import { ColorTagCard } from '../../molecules/color-tag-card/ColorTagCard'
 import { Header } from '../../molecules/header/Header'
-import { ModalWindow } from '../../molecules/ModalWindow/ModalWindow'
-import { ProjectInput } from '../../organisms/project-input/ProjectInput'
 import { IconPlus } from '../../atoms/icon-plus/IconPlus'
 import { IconGear } from '../../atoms/icon-gear/IconGear'
-import { IconSave } from '../../atoms/icon-save/IconSave'
 import { IconEdit } from '../../atoms/icon-edit/IconEdit'
 import { IconDelete } from '../../atoms/icon-delete/IconDelete'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
   projects: Project[]
+  remove: (id: string) => void
 }
 
-export const ProjectSelect: FC<Props> = (props) => {
+export const ProjectList: FC<Props> = (props) => {
   const [isSetting, setIsSetting] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [project, setProject] = useState<Project | undefined>(undefined)
+
+  const navigate = useNavigate()
 
   return (
     <div className={styles.template}>
@@ -29,8 +28,7 @@ export const ProjectSelect: FC<Props> = (props) => {
             <IconPlus
               variant={'large'}
               onClick={() => {
-                setProject(undefined)
-                setIsModalOpen(true)
+                navigate('/project/create')
               }}
             />
             <IconGear
@@ -49,7 +47,7 @@ export const ProjectSelect: FC<Props> = (props) => {
               label={project.name}
               variant="green"
               onClick={() => {
-                console.log(project.id)
+                console.log(project.projectId)
               }}
             />
             {isSetting && (
@@ -57,30 +55,20 @@ export const ProjectSelect: FC<Props> = (props) => {
                 <IconEdit
                   variant={'medium'}
                   onClick={() => {
-                    setProject(project)
-                    setIsModalOpen(true)
+                    navigate('/project/update', { state: project })
                   }}
                 />
-                <IconDelete variant={'medium'} onClick={() => {}} />
+                <IconDelete
+                  variant={'medium'}
+                  onClick={() => {
+                    props.remove(project.projectId)
+                  }}
+                />
               </div>
             )}
           </div>
         ))}
       </div>
-      <ModalWindow
-        isOpen={isModalOpen}
-        setIsOpen={setIsModalOpen}
-        button={
-          <IconSave
-            variant={'large'}
-            onClick={() => {
-              console.log(42)
-            }}
-          />
-        }
-      >
-        <ProjectInput project={project} />
-      </ModalWindow>
     </div>
   )
 }

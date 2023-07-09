@@ -1,5 +1,5 @@
 import { type FC, useState } from 'react'
-import styles from './SnapshotSelect.module.scss'
+import styles from './SnapshotList.module.scss'
 import { TextCard } from '../../molecules/text-card/TextCard'
 import { type SnapshotSummary } from '../../../types'
 import { Header } from '../../molecules/header/Header'
@@ -16,7 +16,7 @@ interface Props {
   snapshotSummaries: SnapshotSummary[]
 }
 
-export const SnapshotSelect: FC<Props> = (props) => {
+export const SnapshotList: FC<Props> = (props) => {
   const [isSetting, setIsSetting] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [snapshot, setSnapshot] = useState<SnapshotSummary | undefined>(
@@ -49,16 +49,16 @@ export const SnapshotSelect: FC<Props> = (props) => {
       <div className={styles.component}>
         <div className={styles.snapshots}>
           {props.snapshotSummaries.map((snapshotSummary) => (
-            <div key={snapshotSummary.id} className={styles.item}>
+            <div key={snapshotSummary.snapshotId} className={styles.item}>
               <TextCard
-                key={snapshotSummary.id}
-                label={snapshotSummary.name}
+                key={snapshotSummary.snapshotId}
+                label={snapshotSummary.snapshotName}
                 text={snapshotSummary.createAt}
-                selected={selectedId === snapshotSummary.id}
+                selected={selectedId === snapshotSummary.snapshotId}
                 onClick={() => {
                   if (selectedId === null) {
-                    setSelectedId(snapshotSummary.id)
-                  } else if (selectedId === snapshotSummary.id) {
+                    setSelectedId(snapshotSummary.snapshotId)
+                  } else if (selectedId === snapshotSummary.snapshotId) {
                     setSelectedId(null)
                   } else {
                     alert(2)

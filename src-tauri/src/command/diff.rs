@@ -14,6 +14,7 @@ use crate::domain::schema::{ColName, PrimaryValue, TableName};
 use crate::domain::snapshot::{SnapshotId, TableSnapshot};
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SnapshotDiffJson {
     pub diff_id: DiffId,
     pub snapshot_id1: SnapshotId,
@@ -33,6 +34,7 @@ impl SnapshotDiffJson {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TableDiffJson {
     pub primary_values: Vec<PrimaryValue>,
     pub primary_col_name: ColName,

@@ -9,6 +9,7 @@ use crate::domain::snapshot::{SnapshotId, SnapshotName, SnapshotSummary};
 use crate::dump::dump;
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SnapshotSummaryJson {
     pub snapshot_id: SnapshotId,
     pub snapshot_name: SnapshotName,

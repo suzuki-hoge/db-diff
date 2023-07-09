@@ -13,7 +13,7 @@ pub fn all_projects(conn: &mut Conn) -> anyhow::Result<Vec<Project>> {
                     let (project_id, name, rdbms, user, password, host, port, schema) =
                         from_row::<(ProjectId, String, String, String, String, String, String, String)>(row);
                     let rdbms = match rdbms.as_ref() {
-                        "mysql" => Mysql,
+                        "MySQL" => Mysql,
                         _ => unreachable!(),
                     };
                     Project::new(&project_id, name, rdbms, user, password, host, port, schema)
@@ -30,7 +30,7 @@ pub fn insert_project(conn: &mut Conn, project: &Project) -> anyhow::Result<()> 
             &project.project_id,
             &project.name,
             match project.rdbms {
-                Mysql => "mysql",
+                Mysql => "MySQL",
             },
             &project.user,
             &project.password,
@@ -48,7 +48,7 @@ pub fn update_project(conn: &mut Conn, project: &Project) -> anyhow::Result<()> 
         (
             &project.name,
             match project.rdbms {
-                Mysql => "mysql",
+                Mysql => "MySQL",
             },
             &project.user,
             &project.password,

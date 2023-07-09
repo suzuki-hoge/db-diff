@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const SnapshotInput: FC<Props> = (props) => {
-  const [name, setName] = useState(props.snapshotSummary?.name ?? '')
+  const [name, setName] = useState(props.snapshotSummary?.snapshotName ?? '')
 
   return (
     <div className={styles.component}>

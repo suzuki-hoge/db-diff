@@ -1,5 +1,9 @@
+import { v4 } from 'uuid'
+
+export const createProjectId: () => string = () => v4()
+
 export interface Project {
-  id: string
+  projectId: string
   name: string
   rdbms: string
   user: string
@@ -10,8 +14,8 @@ export interface Project {
 }
 
 export interface SnapshotSummary {
-  id: string
-  name: string
+  snapshotId: string
+  snapshotName: string
   createAt: string
 }
 

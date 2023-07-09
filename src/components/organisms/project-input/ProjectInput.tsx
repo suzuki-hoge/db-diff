@@ -1,10 +1,12 @@
-import { type FC, useState } from 'react'
+import React, { type FC, useState } from 'react'
 import styles from './ProjectInput.module.scss'
-import { type Project } from '../../../types'
+import { createProjectId, type Project } from '../../../types'
 import { InputText } from '../../atoms/input-text/InputText'
+import { IconSave } from '../../atoms/icon-save/IconSave'
 
 interface Props {
   project?: Project
+  save: (project: Project) => void
 }
 
 export const ProjectInput: FC<Props> = (props) => {
@@ -89,6 +91,22 @@ export const ProjectInput: FC<Props> = (props) => {
           }}
         />
       </div>
+      <IconSave
+        variant={'large'}
+        onClick={() => {
+          const projectId = props.project?.projectId ?? createProjectId()
+          props.save({
+            projectId,
+            name,
+            rdbms: 'MySQL',
+            user,
+            password,
+            host,
+            port,
+            schema,
+          })
+        }}
+      />
     </div>
   )
 }

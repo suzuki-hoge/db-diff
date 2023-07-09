@@ -44,7 +44,7 @@ fn tsx(name: &str) -> String {
 import {{ type FC }} from 'react'
 import styles from './{name}.module.scss'
 
-adapter Props {{
+interface Props {{
 }}
 
 export const {name}: FC<Props> = (props) => {{

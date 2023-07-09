@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react'
 
-import { SnapshotSelect } from './SnapshotSelect'
+import { SnapshotList } from './SnapshotList'
 
 const meta = {
-  title: 'Templates/SnapshotSelect',
-  component: SnapshotSelect,
+  title: 'Templates/SnapshotList',
+  component: SnapshotList,
   tags: ['autodocs'],
   argTypes: {},
-} satisfies Meta<typeof SnapshotSelect>
+} satisfies Meta<typeof SnapshotList>
 
 export default meta
 type Story = StoryObj<typeof meta>
