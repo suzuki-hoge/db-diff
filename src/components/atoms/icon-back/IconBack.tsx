@@ -8,7 +8,5 @@ interface Props {
 }
 
 export const IconBack: FC<Props> = (props) => {
-  return (
-    <IoIosArrowBack className={styles[props.variant]} onClick={props.onClick} />
-  )
+  return <IoIosArrowBack className={styles[props.variant]} onClick={props.onClick} />
 }

@@ -8,7 +8,5 @@ interface Props {
 }
 
 export const IconSave: FC<Props> = (props) => {
-  return (
-    <IoSaveOutline className={styles[props.variant]} onClick={props.onClick} />
-  )
+  return <IoSaveOutline className={styles[props.variant]} onClick={props.onClick} />
 }

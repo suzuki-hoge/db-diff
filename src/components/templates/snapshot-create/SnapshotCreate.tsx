@@ -1,17 +1,15 @@
 import React, { type FC } from 'react'
-import { ProjectInput } from '../../organisms/project-input/ProjectInput'
-import styles from '../project-update/ProjectUpdate.module.scss'
-import { Header } from '../../molecules/header/Header'
-import { type Project } from '../../../types'
-import { IconBack } from '../../atoms/icon-back/IconBack'
+import styles from './SnapshotCreate.module.scss'
 import { useNavigate } from 'react-router-dom'
+import { Header } from '../../molecules/header/Header'
+import { IconBack } from '../../atoms/icon-back/IconBack'
+import { SnapshotInput } from '../../organisms/snapshot-input/SnapshotInput'
 
 interface Props {
-  project: Project
-  update: (project: Project) => void
+  dump: (snapshotName: string) => void
 }
 
-export const ProjectUpdate: FC<Props> = (props) => {
+export const SnapshotCreate: FC<Props> = (props) => {
   const navigate = useNavigate()
 
   return (
@@ -21,13 +19,13 @@ export const ProjectUpdate: FC<Props> = (props) => {
           <IconBack
             variant={'large'}
             onClick={() => {
-              navigate('/project/list')
+              navigate('/snapshot-summary/list')
             }}
           />
         }
         locals={<></>}
       />
-      <ProjectInput project={props.project} save={props.update} />
+      <SnapshotInput dump={props.dump} />
     </div>
   )
 }

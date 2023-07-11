@@ -18,6 +18,16 @@ export const ProjectListPage: FC = () => {
       .catch(console.log)
   }, [location])
 
+  const select: (projectId: string) => void = (projectId) => {
+    invoke('select_project_command', { projectId })
+      .then(() => {
+        navigate('/snapshot-summary/list')
+      })
+      .catch(() => {
+        navigate('/project/list')
+      })
+  }
+
   const remove: (projectId: string) => void = (projectId) => {
     invoke('delete_project_command', { projectId })
       .then(() => {
@@ -26,5 +36,5 @@ export const ProjectListPage: FC = () => {
       .catch(console.log)
   }
 
-  return <ProjectList projects={projects} remove={remove} />
+  return <ProjectList projects={projects} select={select} remove={remove} />
 }

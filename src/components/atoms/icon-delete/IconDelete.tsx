@@ -8,10 +8,5 @@ interface Props {
 }
 
 export const IconDelete: FC<Props> = (props) => {
-  return (
-    <AiOutlineDelete
-      className={styles[props.variant]}
-      onClick={props.onClick}
-    />
-  )
+  return <AiOutlineDelete className={styles[props.variant]} onClick={props.onClick} />
 }

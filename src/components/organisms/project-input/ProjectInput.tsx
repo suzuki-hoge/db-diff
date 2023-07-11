@@ -2,7 +2,7 @@ import React, { type FC, useState } from 'react'
 import styles from './ProjectInput.module.scss'
 import { createProjectId, type Project } from '../../../types'
 import { InputText } from '../../atoms/input-text/InputText'
-import { IconSave } from '../../atoms/icon-save/IconSave'
+import { Button } from '../../atoms/button/Button'
 
 interface Props {
   project?: Project
@@ -91,8 +91,9 @@ export const ProjectInput: FC<Props> = (props) => {
           }}
         />
       </div>
-      <IconSave
-        variant={'large'}
+      <Button
+        variant={'primary'}
+        label={'Save'}
         onClick={() => {
           const projectId = props.project?.projectId ?? createProjectId()
           props.save({

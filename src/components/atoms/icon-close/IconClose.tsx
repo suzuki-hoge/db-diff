@@ -8,10 +8,5 @@ interface Props {
 }
 
 export const IconClose: FC<Props> = (props) => {
-  return (
-    <IoCloseCircleOutline
-      className={styles[props.variant]}
-      onClick={props.onClick}
-    />
-  )
+  return <IoCloseCircleOutline className={styles[props.variant]} onClick={props.onClick} />
 }

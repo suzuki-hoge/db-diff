@@ -9,7 +9,6 @@ export const ProjectUpdatePage: FC = () => {
   const navigate = useNavigate()
 
   const project = location.state as Project
-  console.log(project)
 
   const update: (project: Project) => void = (project) => {
     invoke('update_project_command', { projectJson: project })
@@ -19,9 +18,5 @@ export const ProjectUpdatePage: FC = () => {
       .catch(console.log)
   }
 
-  return project !== undefined ? (
-    <ProjectUpdate project={project} update={update} />
-  ) : (
-    <></>
-  )
+  return project !== undefined ? <ProjectUpdate project={project} update={update} /> : <></>
 }

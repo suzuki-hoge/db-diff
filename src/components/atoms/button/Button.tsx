@@ -15,11 +15,7 @@ const classes = {
 
 export const Button: FC<Props> = (props) => {
   return (
-    <button
-      type="button"
-      className={classes[props.variant]}
-      onClick={props.onClick}
-    >
+    <button type="button" className={classes[props.variant]} onClick={props.onClick}>
       {props.label}
     </button>
   )

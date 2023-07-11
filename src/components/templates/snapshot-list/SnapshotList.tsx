@@ -4,37 +4,40 @@ import { TextCard } from '../../molecules/text-card/TextCard'
 import { type SnapshotSummary } from '../../../types'
 import { Header } from '../../molecules/header/Header'
 import { IconBack } from '../../atoms/icon-back/IconBack'
-import { ModalWindow } from '../../molecules/ModalWindow/ModalWindow'
-import { SnapshotInput } from '../../organisms/snapshot-input/SnapshotInput'
 import { IconPlus } from '../../atoms/icon-plus/IconPlus'
 import { IconGear } from '../../atoms/icon-gear/IconGear'
 import { IconEdit } from '../../atoms/icon-edit/IconEdit'
 import { IconDelete } from '../../atoms/icon-delete/IconDelete'
-import { IconSave } from '../../atoms/icon-save/IconSave'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
   snapshotSummaries: SnapshotSummary[]
+  remove: (id: string) => void
 }
 
 export const SnapshotList: FC<Props> = (props) => {
   const [isSetting, setIsSetting] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [snapshot, setSnapshot] = useState<SnapshotSummary | undefined>(
-    undefined
-  )
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedSnapshotSummary, setSelectedSnapshotSummary] = useState<SnapshotSummary | null>(null)
+
+  const navigate = useNavigate()
 
   return (
     <div className={styles.template}>
       <Header
-        globals={<IconBack variant={'large'} onClick={() => {}} />}
+        globals={
+          <IconBack
+            variant={'large'}
+            onClick={() => {
+              navigate('/project/list')
+            }}
+          />
+        }
         locals={
           <>
             <IconPlus
               variant={'large'}
               onClick={() => {
-                setSnapshot(undefined)
-                setIsModalOpen(true)
+                navigate('/snapshot-summary/create')
               }}
             />
             <IconGear
@@ -54,14 +57,22 @@ export const SnapshotList: FC<Props> = (props) => {
                 key={snapshotSummary.snapshotId}
                 label={snapshotSummary.snapshotName}
                 text={snapshotSummary.createAt}
-                selected={selectedId === snapshotSummary.snapshotId}
+                selected={selectedSnapshotSummary?.snapshotId === snapshotSummary.snapshotId}
                 onClick={() => {
-                  if (selectedId === null) {
-                    setSelectedId(snapshotSummary.snapshotId)
-                  } else if (selectedId === snapshotSummary.snapshotId) {
-                    setSelectedId(null)
+                  if (selectedSnapshotSummary === null) {
+                    setSelectedSnapshotSummary(snapshotSummary)
+                  } else if (selectedSnapshotSummary.snapshotId === snapshotSummary.snapshotId) {
+                    setSelectedSnapshotSummary(null)
                   } else {
-                    alert(2)
+                    if (selectedSnapshotSummary.createAt < snapshotSummary.createAt) {
+                      const snapshotId1 = selectedSnapshotSummary.snapshotId
+                      const snapshotId2 = snapshotSummary.snapshotId
+                      navigate('/diff', { state: { snapshotId1, snapshotId2 } })
+                    } else {
+                      const snapshotId1 = snapshotSummary.snapshotId
+                      const snapshotId2 = selectedSnapshotSummary.snapshotId
+                      navigate('/diff', { state: { snapshotId1, snapshotId2 } })
+                    }
                   }
                 }}
               />
@@ -70,31 +81,21 @@ export const SnapshotList: FC<Props> = (props) => {
                   <IconEdit
                     variant={'medium'}
                     onClick={() => {
-                      setSnapshot(snapshotSummary)
-                      setIsModalOpen(true)
+                      navigate('/snapshot-summary/update', { state: snapshotSummary })
                     }}
                   />
-                  <IconDelete variant={'medium'} onClick={() => {}} />
+                  <IconDelete
+                    variant={'medium'}
+                    onClick={() => {
+                      props.remove(snapshotSummary.snapshotId)
+                    }}
+                  />
                 </div>
               )}
             </div>
           ))}
         </div>
       </div>
-      <ModalWindow
-        isOpen={isModalOpen}
-        setIsOpen={setIsModalOpen}
-        button={
-          <IconSave
-            variant={'large'}
-            onClick={() => {
-              console.log(42)
-            }}
-          />
-        }
-      >
-        <SnapshotInput snapshotSummary={snapshot} />
-      </ModalWindow>
     </div>
   )
 }

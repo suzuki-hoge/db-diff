@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 
 interface Props {
   projects: Project[]
+  select: (projectId: string) => void
   remove: (id: string) => void
 }
 
@@ -47,7 +48,7 @@ export const ProjectList: FC<Props> = (props) => {
               label={project.name}
               variant="green"
               onClick={() => {
-                console.log(project.projectId)
+                props.select(project.projectId)
               }}
             />
             {isSetting && (

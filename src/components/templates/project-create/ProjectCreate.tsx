@@ -20,7 +20,7 @@ export const ProjectCreate: FC<Props> = (props) => {
           <IconBack
             variant={'large'}
             onClick={() => {
-              navigate(-1)
+              navigate('/project/list')
             }}
           />
         }

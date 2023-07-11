@@ -13,6 +13,8 @@ export interface Project {
   schema: string
 }
 
+export const createSnapshotId: () => string = () => v4()
+
 export interface SnapshotSummary {
   snapshotId: string
   snapshotName: string
@@ -21,13 +23,7 @@ export interface SnapshotSummary {
 
 type PrimaryValue = string
 type ColName = string
-type RowDiff = Record<
-  PrimaryValue,
-  Record<
-    ColName,
-    { status: 'stay' | 'added' | 'deleted' | 'none'; value: string }
-  >
->
+type RowDiff = Record<PrimaryValue, Record<ColName, { status: 'stay' | 'added' | 'deleted' | 'none'; value: string }>>
 
 export interface TableDiff {
   tableName: string

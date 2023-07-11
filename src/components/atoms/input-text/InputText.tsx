@@ -9,13 +9,6 @@ interface Props {
 
 export const InputText: FC<Props> = (props) => {
   return (
-    <input
-      className={styles.component}
-      type="text"
-      value={props.value}
-      size={props.length * 2}
-      maxLength={props.length}
-      onChange={props.onInput}
-    />
+    <input className={styles.component} type="text" value={props.value} size={props.length * 2} maxLength={props.length} onChange={props.onInput} />
   )
 }

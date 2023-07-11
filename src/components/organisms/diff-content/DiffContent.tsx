@@ -16,10 +16,7 @@ const colors = {
 interface TRProps {
   primaryValue: string
   colNames: string[]
-  rowDiff?: Record<
-    string,
-    { status: 'stay' | 'added' | 'deleted' | 'none'; value: string }
-  >
+  rowDiff?: Record<string, { status: 'stay' | 'added' | 'deleted' | 'none'; value: string }>
   n: number
 }
 

@@ -15,9 +15,7 @@ interface Props {
 }
 
 export const DiffViewer: FC<Props> = (props) => {
-  const [ignoreTableNames, setIgnoreTableNames] = useState(
-    props.ignoreTableNames
-  )
+  const [ignoreTableNames, setIgnoreTableNames] = useState(props.ignoreTableNames)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -56,11 +54,7 @@ export const DiffViewer: FC<Props> = (props) => {
                   if (!ignoreTableNames.includes(tableName)) {
                     setIgnoreTableNames(ignoreTableNames.concat([tableName]))
                   } else {
-                    setIgnoreTableNames(
-                      ignoreTableNames.filter(
-                        (ignoreTableName) => ignoreTableName !== tableName
-                      )
-                    )
+                    setIgnoreTableNames(ignoreTableNames.filter((ignoreTableName) => ignoreTableName !== tableName))
                   }
                 }}
               />
