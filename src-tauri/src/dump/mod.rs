@@ -17,6 +17,11 @@ pub fn dump(conn: &mut Conn, project: &Project, snapshot_name: SnapshotName) -> 
 
     let snapshot_id = create_snapshot_id();
 
+    // todo: begin
+
+    let snapshot_summary = SnapshotSummary::create(&snapshot_id, &snapshot_name);
+    insert_snapshot_summary(conn, &project.project_id, &snapshot_summary)?;
+
     let table_schemata = adapter.get_table_schemata()?;
 
     for table_schema in table_schemata {
@@ -29,8 +34,8 @@ pub fn dump(conn: &mut Conn, project: &Project, snapshot_name: SnapshotName) -> 
 
         insert_table_snapshot(conn, &snapshot_id, &table_snapshot)?;
     }
-    let snapshot_summary = SnapshotSummary::create(&snapshot_id, &snapshot_name);
-    insert_snapshot_summary(conn, &project.project_id, &snapshot_summary)?;
+
+    // todo: commit
 
     Ok(snapshot_id)
 }

@@ -73,7 +73,7 @@ impl TargetDbAdapter for TargetDbMysql80 {
         let cols = column_schemata.get_all_col_refs();
 
         self.conn
-            .query(format!("select {} from {}", cols.iter().map(|col| as_select_col(col)).join(","), table_schema.table_name))
+            .query(format!("select {} from `{}`", cols.iter().map(|col| as_select_col(col)).join(","), table_schema.table_name))
             .map(|result| {
                 result
                     .map(|x| x.unwrap())
@@ -98,8 +98,8 @@ impl TargetDbAdapter for TargetDbMysql80 {
 
 fn as_select_col(col: &ColumnSchema) -> String {
     match col.data_type.as_str() {
-        "bit" => format!("bin({})", col.col_name),
-        _ => col.col_name.to_string(),
+        "bit" => format!("bin(`{}`)", col.col_name),
+        _ => format!("`{}`", col.col_name),
     }
 }
 

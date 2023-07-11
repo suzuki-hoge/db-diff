@@ -25,7 +25,7 @@ export const ProjectListPage: FC = () => {
         navigate('/snapshot-summary/list')
       })
       .catch((e) => {
-        alert(e)
+        console.log(e)
         navigate('/project/list')
       })
   }
