@@ -8,6 +8,7 @@ import { Header } from '../../molecules/header/Header'
 import { IconBack } from '../../atoms/icon-back/IconBack'
 import { ModalWindow } from '../../molecules/ModalWindow/ModalWindow'
 import { IconSearch } from '../../atoms/icon-search/IconSearch'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
   tableDiffs: TableDiff[]
@@ -19,10 +20,19 @@ export const DiffViewer: FC<Props> = (props) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  const navigate = useNavigate()
+
   return (
     <div className={styles.template}>
       <Header
-        globals={<IconBack variant={'large'} onClick={() => {}} />}
+        globals={
+          <IconBack
+            variant={'large'}
+            onClick={() => {
+              navigate('/snapshot-summary/list')
+            }}
+          />
+        }
         locals={
           <IconSearch
             variant={'large'}

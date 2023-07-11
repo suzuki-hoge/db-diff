@@ -36,6 +36,7 @@ impl SnapshotDiffJson {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TableDiffJson {
+    pub table_name: TableName,
     pub primary_values: Vec<PrimaryValue>,
     pub primary_col_name: ColName,
     pub col_names: Vec<ColName>,
@@ -60,6 +61,7 @@ impl TableDiffJson {
         }
 
         Self {
+            table_name: table_diff.table_name,
             primary_values: table_diff.primary_col_values.into_iter().map(|primary_col_value| primary_col_value.as_primary_value()).collect(),
             primary_col_name: table_diff.primary_col_name,
             col_names: table_diff.col_names,
