@@ -62,9 +62,18 @@ pub fn all_projects_command(app_state: State<'_, AppState>) -> Result<Vec<Projec
 
 #[tauri::command]
 pub fn select_project_command(app_state: State<'_, AppState>, project_id: ProjectId) -> Result<(), String> {
-    app_state.set_project_id(project_id);
+    let mut conn = app_state.conn.lock().unwrap();
 
-    Ok(())
+    let projects = all_projects(&mut conn).map_err(|e| e.to_string())?;
+    let project = projects.iter().find(|project| project.project_id == project_id).unwrap();
+
+    match project.create_connection() {
+        Ok(_) => {
+            app_state.set_project_id(project_id);
+            Ok(())
+        }
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 #[tauri::command]

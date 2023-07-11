@@ -21,9 +21,11 @@ export const ProjectListPage: FC = () => {
   const select: (projectId: string) => void = (projectId) => {
     invoke('select_project_command', { projectId })
       .then(() => {
+        console.log('connection ok')
         navigate('/snapshot-summary/list')
       })
-      .catch(() => {
+      .catch((e) => {
+        alert(e)
         navigate('/project/list')
       })
   }

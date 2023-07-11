@@ -1,3 +1,8 @@
+use anyhow::anyhow;
+use mysql::{Conn, Opts, OptsBuilder};
+use r2d2::ManageConnection;
+use r2d2_mysql::MysqlConnectionManager;
+
 pub type ProjectId = String;
 
 #[cfg(test)]
@@ -35,5 +40,13 @@ impl Project {
             port: port.into(),
             schema: schema.into(),
         }
+    }
+
+    pub fn create_connection(&self) -> anyhow::Result<Conn> {
+        let url = format!("mysql://{}:{}@{}:{}/{}", self.user, self.password, self.host, self.port, self.schema);
+        let opt = Opts::from_url(&url).unwrap();
+        let builder = OptsBuilder::from_opts(opt);
+        let manager = MysqlConnectionManager::new(builder);
+        manager.connect().map_err(|e| anyhow!(e))
     }
 }

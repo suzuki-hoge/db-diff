@@ -1,9 +1,7 @@
 use anyhow::anyhow;
 use itertools::Itertools;
 use mysql::Value::NULL;
-use mysql::{from_row, from_value, Conn, Opts, OptsBuilder, Value};
-use r2d2::ManageConnection;
-use r2d2_mysql::MysqlConnectionManager;
+use mysql::{from_row, from_value, Conn, Value};
 
 use crate::domain::project::Project;
 use crate::domain::schema::{ColumnSchema, ColumnSchemata, TableSchema};
@@ -18,18 +16,10 @@ pub struct TargetDbMysql80 {
 
 impl TargetDbMysql80 {
     pub fn new(project: &Project) -> anyhow::Result<Self> {
-        let conn = TargetDbMysql80::create_connection(project)?;
+        let conn = project.create_connection()?;
         let schema = project.schema.clone();
 
         Ok(Self { conn, schema })
-    }
-
-    fn create_connection(project: &Project) -> anyhow::Result<Conn> {
-        let url = format!("mysql://{}:{}@{}:{}/{}", project.user, project.password, project.host, project.port, project.schema);
-        let opt = Opts::from_url(&url).unwrap();
-        let builder = OptsBuilder::from_opts(opt);
-        let manager = MysqlConnectionManager::new(builder);
-        manager.connect().map_err(|e| anyhow!(e))
     }
 }
 
