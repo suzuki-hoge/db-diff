@@ -1,16 +1,4 @@
 services:
-  table-snapshot:
-    build: ./docker/table-snapshot
-    ports:
-      - 19000:3306
-    volumes:
-      - ./docker/table-snapshot/init.d:/docker-entrypoint-initdb.d
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: table-snapshot
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-
   testdata-mysql80:
     build: ./docker/testdata-mysql80
     ports:

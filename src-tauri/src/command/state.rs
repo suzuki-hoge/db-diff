@@ -1,12 +1,12 @@
 use std::sync::Mutex;
 
-use mysql::Conn;
+use diesel::SqliteConnection;
 
 use crate::db::create_connection;
 use crate::domain::project::ProjectId;
 
 pub struct AppState {
-    pub conn: Mutex<Conn>,
+    pub conn: Mutex<SqliteConnection>,
     pub project_id: Mutex<Option<ProjectId>>,
 }
 

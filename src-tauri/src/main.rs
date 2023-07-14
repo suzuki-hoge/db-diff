@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate diesel;
+
 use tauri::Manager;
 
 use crate::command::state::AppState;
@@ -24,6 +27,10 @@ fn main() -> anyhow::Result<()> {
         .setup(|app| {
             let state = AppState::new()?;
             app.manage(state);
+
+            #[cfg(debug_assertions)]
+            app.get_window("main").unwrap().open_devtools();
+
             Ok(())
         })
         .run(tauri::generate_context!())

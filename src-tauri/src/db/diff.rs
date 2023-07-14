@@ -1,29 +1,30 @@
-use anyhow::anyhow;
-use mysql::{from_row, Conn};
+use anyhow::Context;
+use diesel::prelude::*;
+use diesel::{RunQueryDsl, SqliteConnection};
 
+use crate::db::schema;
 use crate::domain::diff::SnapshotDiff;
 use crate::domain::snapshot::SnapshotId;
 
-pub fn find_snapshot_diff(conn: &mut Conn, snapshot_id1: &SnapshotId, snapshot_id2: &SnapshotId) -> anyhow::Result<Option<SnapshotDiff>> {
-    conn.query(format!("select data from snapshot_diff where snapshot_id1 = '{snapshot_id1}' and snapshot_id2 = '{snapshot_id2}'"))
-        .map(|result| {
-            result
-                .map(|x| x.unwrap())
-                .map(|row| {
-                    let data = from_row::<String>(row);
-                    let snapshot_diff: SnapshotDiff = serde_json::from_str(&data).unwrap();
-                    snapshot_diff
-                })
-                .next()
-        })
-        .map_err(|e| anyhow!(e))
+pub fn find_snapshot_diff(conn: &SqliteConnection, snapshot_id1: &SnapshotId, snapshot_id2: &SnapshotId) -> anyhow::Result<Option<SnapshotDiff>> {
+    let rows: Vec<String> = schema::snapshot_diffs::table
+        .select(schema::snapshot_diffs::data)
+        .filter(schema::snapshot_diffs::snapshot_id1.eq(snapshot_id1).and(schema::snapshot_diffs::snapshot_id2.eq(snapshot_id2)))
+        .load(conn)
+        .context("error")?;
+    Ok(rows.into_iter().next().map(|data| serde_json::from_str(&data).unwrap()))
 }
 
-pub fn insert_snapshot_diff(conn: &mut Conn, snapshot_diff: &SnapshotDiff) -> anyhow::Result<()> {
-    conn.prep_exec(
-        "insert into snapshot_diff values (?, ?, ?, ?)",
-        (&snapshot_diff.diff_id, &snapshot_diff.snapshot_id1, &snapshot_diff.snapshot_id2, serde_json::to_string(snapshot_diff).unwrap()),
-    )?;
+pub fn insert_snapshot_diff(conn: &SqliteConnection, snapshot_diff: &SnapshotDiff) -> anyhow::Result<()> {
+    diesel::insert_into(schema::snapshot_diffs::table)
+        .values((
+            schema::snapshot_diffs::diff_id.eq(&snapshot_diff.diff_id),
+            schema::snapshot_diffs::snapshot_id1.eq(&snapshot_diff.snapshot_id1),
+            schema::snapshot_diffs::snapshot_id2.eq(&snapshot_diff.snapshot_id2),
+            schema::snapshot_diffs::data.eq(serde_json::to_string(snapshot_diff).unwrap()),
+        ))
+        .execute(conn)
+        .context("error")?;
     Ok(())
 }
 
@@ -39,6 +40,7 @@ mod tests {
     use crate::domain::project::{create_project_id, Project};
     use crate::domain::snapshot::ColValue::{SimpleNumber, SimpleString};
     use crate::domain::snapshot::{create_snapshot_id, ColValue, SnapshotSummary};
+    use diesel::RunQueryDsl;
 
     fn n(s: &str) -> ColValue {
         SimpleNumber(s.to_string())
@@ -52,26 +54,26 @@ mod tests {
     fn snapshot_diff() -> anyhow::Result<()> {
         // setup
 
-        let mut conn = create_connection()?;
-        conn.prep_exec("delete from project", ())?;
+        let conn = create_connection()?;
+        diesel::sql_query("delete from projects").execute(&conn)?;
 
         let project_id = create_project_id();
 
         let project = Project::new(&project_id, "test-project", Mysql, "user", "password", "127.0.0.1", "3306", "test-db");
-        insert_project(&mut conn, &project)?;
+        insert_project(&conn, &project)?;
 
         let snapshot_id1 = create_snapshot_id();
         let snapshot_id2 = create_snapshot_id();
 
         let snapshot_summary1 = SnapshotSummary::new(&snapshot_id1, "test1", "2023-07-03 08:17:52");
         let snapshot_summary2 = SnapshotSummary::new(&snapshot_id2, "test2", "2023-07-03 08:42:35");
-        insert_snapshot_summary(&mut conn, &project_id, &snapshot_summary1)?;
-        insert_snapshot_summary(&mut conn, &project_id, &snapshot_summary2)?;
+        insert_snapshot_summary(&conn, &project_id, &snapshot_summary1)?;
+        insert_snapshot_summary(&conn, &project_id, &snapshot_summary2)?;
 
         let _table_name = "items".to_string();
 
         // find
-        let table_snapshot_opt = find_snapshot_diff(&mut conn, &snapshot_id1, &snapshot_id2)?;
+        let table_snapshot_opt = find_snapshot_diff(&conn, &snapshot_id1, &snapshot_id2)?;
         assert_eq!(None, table_snapshot_opt);
 
         // insert
@@ -80,9 +82,9 @@ mod tests {
         table_diff.row_diffs2.insert(n("2").as_primary_value(), vec![("name".to_string(), NoValue)].into_iter().collect());
 
         let snapshot_diff = SnapshotDiff::new(&create_diff_id(), &snapshot_id1, &snapshot_id2, vec![table_diff]);
-        insert_snapshot_diff(&mut conn, &snapshot_diff)?;
+        insert_snapshot_diff(&conn, &snapshot_diff)?;
 
-        let table_snapshot_opt = find_snapshot_diff(&mut conn, &snapshot_id1, &snapshot_id2)?;
+        let table_snapshot_opt = find_snapshot_diff(&conn, &snapshot_id1, &snapshot_id2)?;
         assert_eq!(Some(snapshot_diff), table_snapshot_opt);
 
         Ok(())

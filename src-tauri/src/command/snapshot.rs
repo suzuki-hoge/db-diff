@@ -28,39 +28,39 @@ impl SnapshotSummaryJson {
 
 #[tauri::command]
 pub fn all_snapshot_summaries_command(app_state: State<'_, AppState>) -> Result<Vec<SnapshotSummaryJson>, String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
     let project_id = app_state.project_id.lock().unwrap();
     let project_id = project_id.as_ref().unwrap();
 
-    all_snapshot_summaries(&mut conn, project_id)
+    all_snapshot_summaries(&conn, project_id)
         .map(|snapshot_summaries| snapshot_summaries.into_iter().map(SnapshotSummaryJson::from).collect_vec())
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn update_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_summary_json: SnapshotSummaryJson) -> Result<(), String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
 
-    update_snapshot_summary(&mut conn, &snapshot_summary_json.into()).map_err(|e| e.to_string())
+    update_snapshot_summary(&conn, &snapshot_summary_json.into()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn delete_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_id: SnapshotId) -> Result<(), String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
 
-    delete_snapshot_summary(&mut conn, &snapshot_id).map_err(|e| e.to_string())
+    delete_snapshot_summary(&conn, &snapshot_id).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn dump_snapshot_command(app_state: State<'_, AppState>, snapshot_name: SnapshotName) -> Result<(), String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
     let project_id = app_state.project_id.lock().unwrap();
     let project_id = project_id.as_ref().unwrap();
 
-    let projects = all_projects(&mut conn).map_err(|e| e.to_string())?;
+    let projects = all_projects(&conn).map_err(|e| e.to_string())?;
     let project = projects.iter().find(|project| &project.project_id == project_id).unwrap();
 
-    dump(&mut conn, project, snapshot_name).map_err(|e| e.to_string())?;
+    dump(&conn, project, snapshot_name).map_err(|e| e.to_string())?;
 
     Ok(())
 }

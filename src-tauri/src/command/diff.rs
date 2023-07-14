@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::ops::Deref;
 
 use itertools::Itertools;
+
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -88,12 +89,12 @@ pub fn find_snapshot_diff_command(
     snapshot_id1: SnapshotId,
     snapshot_id2: SnapshotId,
 ) -> Result<SnapshotDiffJson, String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
 
-    let snapshot_diff = match find_snapshot_diff(&mut conn, &snapshot_id1, &snapshot_id2).map_err(|e| e.to_string())? {
+    let snapshot_diff = match find_snapshot_diff(&conn, &snapshot_id1, &snapshot_id2).map_err(|e| e.to_string())? {
         Some(snapshot_diff) => snapshot_diff,
         None => {
-            let table_snapshots1 = find_table_snapshots(&mut conn, &snapshot_id1).map_err(|e| e.to_string())?;
+            let table_snapshots1 = find_table_snapshots(&conn, &snapshot_id1).map_err(|e| e.to_string())?;
             let table_snapshots1: HashMap<&TableName, &TableSnapshot> = table_snapshots1
                 .iter()
                 .into_group_map_by(|table_snapshot| &table_snapshot.table_name)
@@ -101,7 +102,7 @@ pub fn find_snapshot_diff_command(
                 .map(|(&table_name, table_snapshots)| (table_name, table_snapshots[0]))
                 .collect();
 
-            let table_snapshots2 = find_table_snapshots(&mut conn, &snapshot_id2).map_err(|e| e.to_string())?;
+            let table_snapshots2 = find_table_snapshots(&conn, &snapshot_id2).map_err(|e| e.to_string())?;
             let table_snapshots2: HashMap<&TableName, &TableSnapshot> = table_snapshots2
                 .iter()
                 .into_group_map_by(|table_snapshot| &table_snapshot.table_name)
@@ -128,7 +129,7 @@ pub fn find_snapshot_diff_command(
                     .collect(),
             );
 
-            insert_snapshot_diff(&mut conn, &snapshot_diff).map_err(|e| e.to_string())?;
+            insert_snapshot_diff(&conn, &snapshot_diff).map_err(|e| e.to_string())?;
 
             snapshot_diff
         }

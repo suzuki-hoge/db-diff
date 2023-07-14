@@ -1,73 +1,96 @@
-use anyhow::anyhow;
-use mysql::{from_row, Conn};
+use anyhow::Context;
+use diesel::prelude::*;
+use diesel::{RunQueryDsl, SqliteConnection};
 
+use crate::db::schema;
 use crate::domain::project::Rdbms::Mysql;
 use crate::domain::project::{Project, ProjectId};
+use schema::projects as projects_table;
 
-pub fn all_projects(conn: &mut Conn) -> anyhow::Result<Vec<Project>> {
-    conn.query("select project_id, name, rdbms, user, password, host, port, `schema` from project order by project_id")
-        .map(|result| {
-            result
-                .map(|x| x.unwrap())
-                .map(|row| {
-                    let (project_id, name, rdbms, user, password, host, port, schema) =
-                        from_row::<(ProjectId, String, String, String, String, String, String, String)>(row);
-                    let rdbms = match rdbms.as_ref() {
-                        "MySQL" => Mysql,
-                        _ => unreachable!(),
-                    };
-                    Project::new(&project_id, name, rdbms, user, password, host, port, schema)
-                })
-                .collect()
-        })
-        .map_err(|e| anyhow!(e))
+#[derive(Queryable, Insertable)]
+#[table_name = "projects_table"]
+struct ProjectRecord {
+    project_id: ProjectId,
+    name: String,
+    rdbms: String,
+    user: String,
+    password: String,
+    host: String,
+    port: String,
+    schema: String,
 }
 
-pub fn insert_project(conn: &mut Conn, project: &Project) -> anyhow::Result<()> {
-    conn.prep_exec(
-        "insert into project values (?, ?, ?, ?, ?, ?, ?, ?)",
-        (
-            &project.project_id,
-            &project.name,
-            match project.rdbms {
+impl ProjectRecord {
+    fn from(project: &Project) -> Self {
+        Self {
+            project_id: project.project_id.clone(),
+            name: project.name.clone(),
+            rdbms: match project.rdbms {
                 Mysql => "MySQL",
+            }
+            .to_string(),
+            user: project.user.clone(),
+            password: project.password.clone(),
+            host: project.host.clone(),
+            port: project.port.clone(),
+            schema: project.schema.clone(),
+        }
+    }
+
+    fn to(self) -> Project {
+        Project {
+            project_id: self.project_id,
+            name: self.name,
+            rdbms: match self.rdbms.as_ref() {
+                "MySQL" => Mysql,
+                _ => unreachable!(),
             },
-            &project.user,
-            &project.password,
-            &project.host,
-            &project.port,
-            &project.schema,
-        ),
-    )?;
+            user: self.user,
+            password: self.password,
+            host: self.host,
+            port: self.port,
+            schema: self.schema,
+        }
+    }
+}
+
+pub fn all_projects(conn: &SqliteConnection) -> anyhow::Result<Vec<Project>> {
+    let rows: Vec<ProjectRecord> = schema::projects::table.load(conn).context("error")?;
+    Ok(rows.into_iter().map(|row| row.to()).collect())
+}
+
+pub fn insert_project(conn: &SqliteConnection, project: &Project) -> anyhow::Result<()> {
+    let record = ProjectRecord::from(project);
+    diesel::insert_into(schema::projects::table).values(&record).execute(conn).context("error")?;
     Ok(())
 }
 
-pub fn update_project(conn: &mut Conn, project: &Project) -> anyhow::Result<()> {
-    conn.prep_exec(
-        "update project set name = ?, rdbms = ?, user = ?, password = ?, host = ?, port = ?, `schema` = ? where project_id = ?",
-        (
-            &project.name,
-            match project.rdbms {
-                Mysql => "MySQL",
-            },
-            &project.user,
-            &project.password,
-            &project.host,
-            &project.port,
-            &project.schema,
-            &project.project_id,
-        ),
-    )?;
+pub fn update_project(conn: &SqliteConnection, project: &Project) -> anyhow::Result<()> {
+    let record = ProjectRecord::from(project);
+    diesel::update(schema::projects::table.find(&project.project_id))
+        .set((
+            schema::projects::name.eq(&record.name),
+            schema::projects::rdbms.eq(&record.rdbms),
+            schema::projects::user.eq(&record.user),
+            schema::projects::password.eq(&record.password),
+            schema::projects::host.eq(&record.host),
+            schema::projects::port.eq(&record.port),
+            schema::projects::schema.eq(&record.schema),
+        ))
+        .execute(conn)
+        .context("error")?;
     Ok(())
 }
 
-pub fn delete_project(conn: &mut Conn, project_id: &ProjectId) -> anyhow::Result<()> {
-    conn.prep_exec("delete from project where project_id = ?", vec![project_id])?;
+pub fn delete_project(conn: &SqliteConnection, project_id: &ProjectId) -> anyhow::Result<()> {
+    diesel::delete(schema::projects::table.find(project_id)).execute(conn).context("error")?;
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
+    use diesel::RunQueryDsl;
+
     use crate::db::create_connection;
     use crate::db::project::{all_projects, delete_project, insert_project, update_project};
     use crate::domain::project::Project;
@@ -78,35 +101,35 @@ mod tests {
     fn project() -> anyhow::Result<()> {
         // setup
 
-        let mut conn = create_connection()?;
-        conn.prep_exec("delete from project", ())?;
+        let conn = create_connection()?;
+        diesel::sql_query("delete from projects").execute(&conn)?;
 
         // all
-        let projects = all_projects(&mut conn)?;
+        let projects = all_projects(&conn)?;
         assert_eq!(0, projects.len());
 
         let project_id = create_snapshot_id();
 
         // insert
         let project1 = Project::new(&project_id, "test-project", Mysql, "user", "password", "127.0.0.1", "3306", "test-db");
-        insert_project(&mut conn, &project1)?;
+        insert_project(&conn, &project1)?;
 
-        let projects = all_projects(&mut conn)?;
+        let projects = all_projects(&conn)?;
         assert_eq!(1, projects.len());
         assert_eq!(&project1, &projects[0]);
 
         // update
         let project2 = Project::new(&project_id, "test-project-2", Mysql, "user2", "password2", "127.0.0.2", "3307", "test-db2");
-        update_project(&mut conn, &project2)?;
+        update_project(&conn, &project2)?;
 
-        let projects = all_projects(&mut conn)?;
+        let projects = all_projects(&conn)?;
         assert_eq!(1, projects.len());
         assert_eq!(&project2, &projects[0]);
 
         // delete
-        delete_project(&mut conn, &project_id)?;
+        delete_project(&conn, &project_id)?;
 
-        let projects = all_projects(&mut conn)?;
+        let projects = all_projects(&conn)?;
         assert_eq!(0, projects.len());
 
         Ok(())

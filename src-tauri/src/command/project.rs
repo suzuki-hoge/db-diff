@@ -55,16 +55,16 @@ impl ProjectJson {
 
 #[tauri::command]
 pub fn all_projects_command(app_state: State<'_, AppState>) -> Result<Vec<ProjectJson>, String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
 
-    all_projects(&mut conn).map(|projects| projects.into_iter().map(ProjectJson::from).collect_vec()).map_err(|e| e.to_string())
+    all_projects(&conn).map(|projects| projects.into_iter().map(ProjectJson::from).collect_vec()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn select_project_command(app_state: State<'_, AppState>, project_id: ProjectId) -> Result<(), String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
 
-    let projects = all_projects(&mut conn).map_err(|e| e.to_string())?;
+    let projects = all_projects(&conn).map_err(|e| e.to_string())?;
     let project = projects.iter().find(|project| project.project_id == project_id).unwrap();
 
     match project.create_connection() {
@@ -78,21 +78,21 @@ pub fn select_project_command(app_state: State<'_, AppState>, project_id: Projec
 
 #[tauri::command]
 pub fn insert_project_command(app_state: State<'_, AppState>, project_json: ProjectJson) -> Result<(), String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
 
-    insert_project(&mut conn, &project_json.into()).map_err(|e| e.to_string())
+    insert_project(&conn, &project_json.into()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn update_project_command(app_state: State<'_, AppState>, project_json: ProjectJson) -> Result<(), String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
 
-    update_project(&mut conn, &project_json.into()).map_err(|e| e.to_string())
+    update_project(&conn, &project_json.into()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn delete_project_command(app_state: State<'_, AppState>, project_id: ProjectId) -> Result<(), String> {
-    let mut conn = app_state.conn.lock().unwrap();
+    let conn = app_state.conn.lock().unwrap();
 
-    delete_project(&mut conn, &project_id).map_err(|e| e.to_string())
+    delete_project(&conn, &project_id).map_err(|e| e.to_string())
 }

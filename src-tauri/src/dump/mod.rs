@@ -1,4 +1,4 @@
-use mysql::Conn;
+use diesel::SqliteConnection;
 
 use crate::db::snapshot::{insert_snapshot_summary, insert_table_snapshot};
 use crate::domain::project::Project;
@@ -10,7 +10,7 @@ use crate::dump::mysql80::TargetDbMysql80;
 mod adapter;
 mod mysql80;
 
-pub fn dump(conn: &mut Conn, project: &Project, snapshot_name: SnapshotName) -> anyhow::Result<SnapshotId> {
+pub fn dump(conn: &SqliteConnection, project: &Project, snapshot_name: SnapshotName) -> anyhow::Result<SnapshotId> {
     let mut adapter = match &project.rdbms {
         Mysql => TargetDbMysql80::new(project),
     }?;

@@ -37,4 +37,4 @@ gen:
 	@cd src-tauri && cargo run --bin component-generator
 
 sample:
-	@docker compose exec table-snapshot mysql -h localhost -u user -ppassword table-snapshot -e "insert into project values ('55DCFD5F-2C32-45F9-BAB6-707F800EC87C', 'sample', 'MySQL', 'user', 'password', '127.0.0.1', '20000', 'table-diff-sample')"
+	@sqlite3 src-tauri/database.sqlite "insert into projects values ('55DCFD5F-2C32-45F9-BAB6-707F800EC87C', 'sample', 'MySQL', 'user', 'password', '127.0.0.1', '20000', 'table-diff-sample')"
