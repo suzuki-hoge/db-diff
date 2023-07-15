@@ -2,12 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react'
 
 import { DiffViewer } from './DiffViewer'
 import { type TableDiff } from '../../../types'
+import { withRouter } from 'storybook-addon-react-router-v6'
 
 const meta = {
   title: 'Templates/DiffViewer',
   component: DiffViewer,
   tags: ['autodocs'],
   argTypes: {},
+  decorators: [withRouter],
 } satisfies Meta<typeof DiffViewer>
 
 export default meta

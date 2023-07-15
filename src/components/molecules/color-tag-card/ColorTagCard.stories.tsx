@@ -26,7 +26,7 @@ export const Red: Story = {
 
 export const Green: Story = {
   args: {
-    label: 'Todo App',
+    label: 'Tutorial App',
     variant: 'green',
   },
 }

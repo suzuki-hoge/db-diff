@@ -49,16 +49,20 @@ impl TableDiffJson {
     fn from(table_diff: TableDiff) -> Self {
         let mut row_diffs1 = HashMap::new();
         for (primary_value, col) in table_diff.row_diffs1 {
+            let mut cols = HashMap::new();
             for (col_name, col_diff) in col {
-                row_diffs1.insert(primary_value.clone(), vec![(col_name.clone(), TableDiffJson::map(col_diff))].into_iter().collect());
+                cols.insert(col_name, TableDiffJson::map(col_diff));
             }
+            row_diffs1.insert(primary_value, cols);
         }
 
         let mut row_diffs2 = HashMap::new();
         for (primary_value, col) in table_diff.row_diffs2 {
+            let mut cols = HashMap::new();
             for (col_name, col_diff) in col {
-                row_diffs2.insert(primary_value.clone(), vec![(col_name.clone(), TableDiffJson::map(col_diff))].into_iter().collect());
+                cols.insert(col_name, TableDiffJson::map(col_diff));
             }
+            row_diffs2.insert(primary_value, cols);
         }
 
         Self {
@@ -120,12 +124,14 @@ pub fn find_snapshot_diff_command(
                 &snapshot_id2,
                 table_names1
                     .into_iter()
+                    .unique()
                     .map(|table_name| {
                         create_table_diff(
                             table_snapshots1.get(table_name).map(|table_snapshot| table_snapshot.deref()),
                             table_snapshots2.get(table_name).map(|table_snapshot| table_snapshot.deref()),
                         )
                     })
+                    .filter(|table_diff| !table_diff.empty())
                     .collect(),
             );
 

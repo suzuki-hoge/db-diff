@@ -77,7 +77,9 @@ mod tests {
         assert_eq!(None, table_snapshot_opt);
 
         // insert
-        let mut table_diff = TableDiff::init(&"user".to_string(), &[&n("1"), &n("2")], &"id".to_string(), vec![&"name".to_string()]);
+        let mut table_diff = TableDiff::init(&"user".to_string(), &"id".to_string(), vec![&"name".to_string()]);
+        table_diff.primary_col_values.push(n("1"));
+        table_diff.primary_col_values.push(n("2"));
         table_diff.row_diffs1.insert(n("1").as_primary_value(), vec![("name".to_string(), Deleted(s("John")))].into_iter().collect());
         table_diff.row_diffs2.insert(n("2").as_primary_value(), vec![("name".to_string(), NoValue)].into_iter().collect());
 

@@ -28,9 +28,6 @@ fn main() -> anyhow::Result<()> {
             let state = AppState::new()?;
             app.manage(state);
 
-            #[cfg(debug_assertions)]
-            app.get_window("main").unwrap().open_devtools();
-
             Ok(())
         })
         .run(tauri::generate_context!())

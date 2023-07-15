@@ -28,13 +28,13 @@ export const Component: Story = {
       },
       {
         projectId: '5594251B-5F1B-4706-9521-324BDF343B33',
-        name: 'Todo App',
+        name: 'Tutorial App',
         rdbms: 'MySQL',
         user: 'admin',
         password: 'admin-pw',
         host: 'localhost',
         port: '3306',
-        schema: 'todo',
+        schema: 'tutorial',
       },
       {
         projectId: 'EBFE34CE-AB67-4B01-AC6A-F0487F3115B8',

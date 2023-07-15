@@ -2,8 +2,8 @@ import { type FC } from 'react'
 import styles from './TextCard.module.scss'
 
 interface Props {
-  label: string // todo: validation
-  text: string // todo: validation
+  label: string
+  text: string
   selected: boolean
   onClick: () => void
 }
