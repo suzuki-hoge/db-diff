@@ -51,18 +51,18 @@ impl TableSnapshot {
         Self { table_name: table_name.clone(), primary_col_name, col_names, hash, row_snapshots }
     }
 
-    pub fn get_primary_col_values(&self) -> Vec<&PrimaryColValue> {
-        self.row_snapshots.iter().map(|row_snapshot| &row_snapshot.primary_col_value).collect()
+    pub fn get_primary_col_values(&self) -> Vec<&PrimaryColValues> {
+        self.row_snapshots.iter().map(|row_snapshot| &row_snapshot.primary_col_values).collect()
     }
 
-    pub fn merge_primary_col_values<'a>(&'a self, other: &'a Self) -> Vec<&'a PrimaryColValue> {
+    pub fn merge_primary_col_values<'a>(&'a self, other: &'a Self) -> Vec<&'a PrimaryColValues> {
         let mut set = BTreeSet::new();
 
         for row in &self.row_snapshots {
-            set.insert(&row.primary_col_value);
+            set.insert(&row.primary_col_values);
         }
         for row in &other.row_snapshots {
-            set.insert(&row.primary_col_value);
+            set.insert(&row.primary_col_values);
         }
 
         set.into_iter().collect_vec()
@@ -86,24 +86,37 @@ impl TableSnapshot {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 pub struct RowSnapshot {
-    pub primary_col_value: PrimaryColValue,
+    pub primary_col_values: PrimaryColValues,
     pub col_values: Vec<ColValue>,
     pub hash: Hash,
 }
 
 impl RowSnapshot {
-    pub fn new(col_values: Vec<ColValue>) -> Self {
-        let col_raw_values = col_values.iter().map(|c| c.as_raw_value()).join(",");
-        let hash = format!("{:?}", md5::compute(col_raw_values));
+    pub fn new(primary_col_values: Vec<ColValue>, col_values: Vec<ColValue>) -> Self {
+        let mut all_col_values = vec![];
+        all_col_values.extend(&primary_col_values);
+        all_col_values.extend(&col_values);
+        let all_col_raw_values = all_col_values.iter().map(|col_value| col_value.as_hash_parts()).join(",");
+        let hash = format!("{:?}", md5::compute(all_col_raw_values));
 
-        let primary_col_value = col_values[0].clone();
-        let col_values = col_values.into_iter().dropping(1).collect_vec();
-
-        Self { primary_col_value, col_values, hash }
+        Self { primary_col_values: PrimaryColValues::new(primary_col_values), col_values, hash }
     }
 }
 
-pub type PrimaryColValue = ColValue;
+#[derive(Serialize, Deserialize, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+pub struct PrimaryColValues {
+    pub col_values: Vec<ColValue>,
+}
+
+impl PrimaryColValues {
+    pub fn new(col_values: Vec<ColValue>) -> Self {
+        Self { col_values }
+    }
+
+    pub fn as_primary_value(&self) -> PrimaryValue {
+        self.col_values.iter().map(|col_value| col_value.as_display_value()).join("-")
+    }
+}
 
 #[derive(Serialize, Deserialize, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub enum ColValue {
@@ -118,13 +131,6 @@ pub enum ColValue {
 }
 
 impl ColValue {
-    pub fn as_primary_value(&self) -> PrimaryValue {
-        match self {
-            SimpleNumber(_) | BitNumber(_) | SimpleString(_) | DateString(_) | JsonString(_) => self.as_display_value(),
-            Null | BinaryString(_) | ParseError => unreachable!(),
-        }
-    }
-
     pub fn as_display_value(&self) -> String {
         match self {
             SimpleNumber(v) => v.to_string(),
@@ -138,7 +144,7 @@ impl ColValue {
         }
     }
 
-    fn as_raw_value(&self) -> String {
+    fn as_hash_parts(&self) -> String {
         match self {
             SimpleNumber(v) => v.to_string(),
             BitNumber(v) => v.to_string(),

@@ -39,7 +39,7 @@ mod tests {
     use crate::domain::project::Rdbms::Mysql;
     use crate::domain::project::{create_project_id, Project};
     use crate::domain::snapshot::ColValue::{SimpleNumber, SimpleString};
-    use crate::domain::snapshot::{create_snapshot_id, ColValue, SnapshotSummary};
+    use crate::domain::snapshot::{create_snapshot_id, ColValue, PrimaryColValues, SnapshotSummary};
     use diesel::RunQueryDsl;
 
     fn n(s: &str) -> ColValue {
@@ -78,10 +78,12 @@ mod tests {
 
         // insert
         let mut table_diff = TableDiff::init(&"user".to_string(), &"id".to_string(), vec![&"name".to_string()]);
-        table_diff.primary_col_values.push(n("1"));
-        table_diff.primary_col_values.push(n("2"));
-        table_diff.row_diffs1.insert(n("1").as_primary_value(), vec![("name".to_string(), Deleted(s("John")))].into_iter().collect());
-        table_diff.row_diffs2.insert(n("2").as_primary_value(), vec![("name".to_string(), NoValue)].into_iter().collect());
+        let primary_col_values1 = PrimaryColValues::new(vec![n("1")]);
+        let primary_col_values2 = PrimaryColValues::new(vec![n("2")]);
+        table_diff.row_diffs1.insert(primary_col_values1.as_primary_value(), vec![("name".to_string(), Deleted(s("John")))].into_iter().collect());
+        table_diff.row_diffs2.insert(primary_col_values2.as_primary_value(), vec![("name".to_string(), NoValue)].into_iter().collect());
+        table_diff.primary_col_values.push(primary_col_values1);
+        table_diff.primary_col_values.push(primary_col_values2);
 
         let snapshot_diff = SnapshotDiff::new(&create_diff_id(), &snapshot_id1, &snapshot_id2, vec![table_diff]);
         insert_snapshot_diff(&conn, &snapshot_diff)?;

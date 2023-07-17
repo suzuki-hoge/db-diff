@@ -312,3 +312,34 @@ export const RowModifiedStringId: Story = {
     },
   },
 }
+
+export const RowsModifiedMultiUniqueColumn: Story = {
+  args: {
+    tableDiff: {
+      tableName: 'users',
+      primaryValues: ['1-"001"', '1-"002"', '2-"001"'],
+      primaryColName: 'id-code',
+      colNames: ['name', 'age'],
+      rowDiffs1: {
+        '1-"001"': {
+          name: { status: 'deleted', value: '"John"' },
+          age: { status: 'deleted', value: '29' },
+        },
+        '2-"001"': {
+          name: { status: 'stay', value: '"Alice"' },
+          age: { status: 'deleted', value: '25' },
+        },
+      },
+      rowDiffs2: {
+        '1-"002"': {
+          name: { status: 'added', value: '"John"' },
+          age: { status: 'added', value: '29' },
+        },
+        '2-"001"': {
+          name: { status: 'stay', value: '"Alice"' },
+          age: { status: 'added', value: '31' },
+        },
+      },
+    },
+  },
+}

@@ -14,34 +14,47 @@ pub struct TableSchema {
     pub table_name: TableName,
 }
 
-pub struct ColumnSchemata {
-    pub primary_col: ColumnSchema,
-    pub cols: Vec<ColumnSchema>,
+pub struct ColSchemata {
+    pub primary_cols: Vec<ColSchema>,
+    pub cols: Vec<ColSchema>,
 }
 
-impl ColumnSchemata {
-    pub fn new(primary_col: ColumnSchema, cols: Vec<ColumnSchema>) -> Self {
-        Self { primary_col, cols }
+impl ColSchemata {
+    pub fn new(primary_cols: Vec<ColSchema>, cols: Vec<ColSchema>) -> Self {
+        Self { primary_cols, cols }
+    }
+
+    pub fn has_any_primary_cols(&self) -> bool {
+        !self.primary_cols.is_empty()
     }
 
     pub fn get_all_col_names(self) -> (PrimaryColName, Vec<ColName>) {
-        (self.primary_col.col_name, self.cols.into_iter().map(|col| col.col_name).collect())
+        let primary_col_name = self.primary_cols.into_iter().map(|primary_col| primary_col.col_name).join("-");
+        let col_names = self.cols.into_iter().map(|col| col.col_name).collect();
+        (primary_col_name, col_names)
     }
 
-    pub fn get_all_col_refs(&self) -> Vec<&ColumnSchema> {
-        let mut cols = self.cols.iter().collect_vec();
-        cols.insert(0, &self.primary_col);
+    pub fn get_all_col_refs(&self) -> Vec<&ColSchema> {
+        let mut cols = self.primary_cols.iter().collect_vec();
+        cols.extend(&self.cols);
         cols
     }
 
-    pub fn count(&self) -> usize {
-        self.cols.len() + 1
+    pub fn get_indices(&self) -> Vec<(usize, bool)> {
+        let mut result = vec![];
+        for (i, _) in self.primary_cols.iter().enumerate() {
+            result.push((i, true));
+        }
+        for (i, _) in self.cols.iter().enumerate() {
+            result.push((self.primary_cols.len() + i, false));
+        }
+        result
     }
 }
 
 #[derive(Clone)]
-pub struct ColumnSchema {
+pub struct ColSchema {
     pub col_name: ColName,
     pub data_type: String,
-    pub column_type: String,
+    pub col_type: String,
 }

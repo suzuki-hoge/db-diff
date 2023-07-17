@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::domain::diff::ColDiff::*;
 use crate::domain::schema::{ColName, Hash, PrimaryColName, PrimaryValue, TableName};
-use crate::domain::snapshot::{ColValue, PrimaryColValue, SnapshotId, TableSnapshot};
+use crate::domain::snapshot::{ColValue, PrimaryColValues, SnapshotId, TableSnapshot};
 use serde::{Deserialize, Serialize};
 
 pub type DiffId = String;
@@ -30,7 +30,7 @@ impl SnapshotDiff {
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 pub struct TableDiff {
     pub table_name: TableName,
-    pub primary_col_values: Vec<PrimaryColValue>,
+    pub primary_col_values: Vec<PrimaryColValues>,
     pub primary_col_name: PrimaryColName,
     pub col_names: Vec<ColName>,
     pub row_diffs1: HashMap<PrimaryValue, HashMap<ColName, ColDiff>>,
@@ -71,7 +71,7 @@ pub fn create_table_diff(table_snapshot1: Option<&TableSnapshot>, table_snapshot
     }
 }
 
-type Rows<'a> = HashMap<&'a PrimaryColValue, (&'a Hash, Cols<'a>)>;
+type Rows<'a> = HashMap<&'a PrimaryColValues, (&'a Hash, Cols<'a>)>;
 type Cols<'a> = HashMap<&'a ColName, &'a ColValue>;
 
 fn take_table_snapshot_diff(table_snapshot1: &TableSnapshot, table_snapshot2: &TableSnapshot) -> TableDiff {
@@ -82,9 +82,9 @@ fn take_table_snapshot_diff(table_snapshot1: &TableSnapshot, table_snapshot2: &T
     let rows1 = parse_rows(table_snapshot1);
     let rows2 = parse_rows(table_snapshot2);
 
-    for primary_col_value in table_snapshot1.merge_primary_col_values(table_snapshot2) {
-        let row1 = rows1.get(primary_col_value);
-        let row2 = rows2.get(primary_col_value);
+    for primary_col_values in table_snapshot1.merge_primary_col_values(table_snapshot2) {
+        let row1 = rows1.get(primary_col_values);
+        let row2 = rows2.get(primary_col_values);
 
         match (row1, row2) {
             // 2 つの行の Hash が一致している場合は、スキップする
@@ -93,19 +93,19 @@ fn take_table_snapshot_diff(table_snapshot1: &TableSnapshot, table_snapshot2: &T
             // 同一の主キー値が片方にしかない場合は、片方の全列を差分として登録する
             (None, Some((_, cols2))) => {
                 table_diff.row_diffs2.insert(
-                    primary_col_value.as_primary_value(),
+                    primary_col_values.as_primary_value(),
                     cols2.iter().map(|(&col_name, &col_value)| (col_name.clone(), Added(col_value.clone()))).collect(),
                 );
-                table_diff.primary_col_values.push(primary_col_value.clone());
+                table_diff.primary_col_values.push(primary_col_values.clone());
             }
 
             // 同一の主キー値が片方にしかない場合は、片方の全列を差分として登録する
             (Some((_, cols1)), None) => {
                 table_diff.row_diffs1.insert(
-                    primary_col_value.as_primary_value(),
+                    primary_col_values.as_primary_value(),
                     cols1.iter().map(|(&col_name, &col_value)| (col_name.clone(), Deleted(col_value.clone()))).collect(),
                 );
-                table_diff.primary_col_values.push(primary_col_value.clone());
+                table_diff.primary_col_values.push(primary_col_values.clone());
             }
 
             // 2 つの行の Hash が一致しない場合は、列ごとに差分をとる
@@ -121,14 +121,14 @@ fn take_table_snapshot_diff(table_snapshot1: &TableSnapshot, table_snapshot2: &T
                     (_, None) => NoValue,
                 };
                 table_diff.row_diffs1.insert(
-                    primary_col_value.as_primary_value(),
+                    primary_col_values.as_primary_value(),
                     total_col_names.iter().map(|&col_name| (col_name.clone(), get_col_diff_f1(col_name))).collect(),
                 );
                 table_diff.row_diffs2.insert(
-                    primary_col_value.as_primary_value(),
+                    primary_col_values.as_primary_value(),
                     total_col_names.iter().map(|&col_name| (col_name.clone(), get_col_diff_f2(col_name))).collect(),
                 );
-                table_diff.primary_col_values.push(primary_col_value.clone());
+                table_diff.primary_col_values.push(primary_col_values.clone());
             }
 
             (None, None) => unreachable!(),
@@ -143,7 +143,7 @@ fn parse_rows<'a>(table_snapshot: &'a TableSnapshot) -> Rows<'a> {
 
     for row_snapshot in &table_snapshot.row_snapshots {
         let cols: Cols<'a> = table_snapshot.col_names.iter().enumerate().map(|(i, col_name)| (col_name, &row_snapshot.col_values[i])).collect();
-        rows.insert(&row_snapshot.primary_col_value, (&row_snapshot.hash, cols));
+        rows.insert(&row_snapshot.primary_col_values, (&row_snapshot.hash, cols));
     }
 
     rows
@@ -154,20 +154,20 @@ fn create_missing_pair_diff(table_snapshot: &TableSnapshot, n: usize) -> TableDi
 
     let rows = parse_rows(table_snapshot);
 
-    for primary_col_value in table_snapshot.get_primary_col_values() {
-        if let Some((_, cols)) = rows.get(primary_col_value) {
+    for primary_col_values in table_snapshot.get_primary_col_values() {
+        if let Some((_, cols)) = rows.get(primary_col_values) {
             let row_diff = cols
                 .iter()
                 .map(|(&col_name, &col_value)| (col_name.clone(), if n == 1 { Deleted(col_value.clone()) } else { Added(col_value.clone()) }))
                 .collect();
 
             if n == 1 {
-                table_diff.row_diffs1.insert(primary_col_value.as_primary_value(), row_diff);
+                table_diff.row_diffs1.insert(primary_col_values.as_primary_value(), row_diff);
             } else {
-                table_diff.row_diffs2.insert(primary_col_value.as_primary_value(), row_diff);
+                table_diff.row_diffs2.insert(primary_col_values.as_primary_value(), row_diff);
             }
         }
-        table_diff.primary_col_values.push(primary_col_value.clone());
+        table_diff.primary_col_values.push(primary_col_values.clone());
     }
 
     table_diff
@@ -179,7 +179,8 @@ mod tests_create_snapshot_diff {
     use crate::domain::diff::{create_table_diff, ColDiff};
     use crate::domain::schema::{ColName, PrimaryValue};
     use crate::domain::snapshot::ColValue::{SimpleNumber, SimpleString};
-    use crate::domain::snapshot::{ColValue, PrimaryColValue, RowSnapshot, TableSnapshot};
+    use crate::domain::snapshot::{ColValue, PrimaryColValues, RowSnapshot, TableSnapshot};
+    use itertools::Itertools;
     use std::collections::HashMap;
 
     fn n(s: &str) -> ColValue {
@@ -199,134 +200,171 @@ mod tests_create_snapshot_diff {
         )
     }
 
-    fn mk_act<'a>(row_diffs: &'a HashMap<PrimaryValue, HashMap<ColName, ColDiff>>, primary_col_value: PrimaryColValue, name: &'a str) -> &'a ColDiff {
-        row_diffs.get(&primary_col_value.as_primary_value()).unwrap().get(name).unwrap()
+    fn mk_act<'a>(
+        row_diffs: &'a HashMap<PrimaryValue, HashMap<ColName, ColDiff>>,
+        primary_col_values: &PrimaryColValues,
+        name: &'a str,
+    ) -> &'a ColDiff {
+        row_diffs.get(&primary_col_values.as_primary_value()).unwrap().get(name).unwrap()
     }
 
     #[test]
     fn test_row_0_and_row_1() {
-        let rows2 = vec![RowSnapshot::new(vec![n("1"), s("John")])];
+        let rows2 = vec![RowSnapshot::new(vec![n("1")], vec![s("John")])];
         let table_snapshot2 = mk_table_snapshot("user", "id", vec!["name"], rows2);
 
         let act = create_table_diff(None, Some(&table_snapshot2));
 
-        assert_eq!(vec![n("1")], act.primary_col_values);
+        let primary_col_values1 = PrimaryColValues::new(vec![n("1")]);
+
+        assert_eq!(vec![&primary_col_values1], act.primary_col_values.iter().collect_vec());
 
         assert_eq!(0, act.row_diffs1.len());
 
         assert_eq!(1, act.row_diffs2.len());
-        assert_eq!(&Added(s("John")), mk_act(&act.row_diffs2, n("1"), "name"));
+        assert_eq!(&Added(s("John")), mk_act(&act.row_diffs2, &primary_col_values1, "name"));
     }
 
     #[test]
     fn test_row_1_and_row_0() {
-        let rows1 = vec![RowSnapshot::new(vec![n("1"), s("John")])];
+        let rows1 = vec![RowSnapshot::new(vec![n("1")], vec![s("John")])];
         let table_snapshot1 = mk_table_snapshot("user", "id", vec!["name"], rows1);
 
         let act = create_table_diff(Some(&table_snapshot1), None);
 
-        assert_eq!(vec![n("1")], act.primary_col_values);
+        let primary_col_values1 = PrimaryColValues::new(vec![n("1")]);
+
+        assert_eq!(vec![&primary_col_values1], act.primary_col_values.iter().collect_vec());
 
         assert_eq!(1, act.row_diffs1.len());
-        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, n("1"), "name"));
+        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, &primary_col_values1, "name"));
 
         assert_eq!(0, act.row_diffs2.len());
     }
 
     #[test]
     fn test_row_1_and_row_1() {
-        let rows1 = vec![RowSnapshot::new(vec![n("1"), s("John")])];
+        let rows1 = vec![RowSnapshot::new(vec![n("1")], vec![s("John")])];
         let table_snapshot1 = mk_table_snapshot("user", "id", vec!["name"], rows1);
 
-        let rows2 = vec![RowSnapshot::new(vec![n("1"), s("Jane")])];
+        let rows2 = vec![RowSnapshot::new(vec![n("1")], vec![s("Jane")])];
         let table_snapshot2 = mk_table_snapshot("user", "id", vec!["name"], rows2);
 
         let act = create_table_diff(Some(&table_snapshot1), Some(&table_snapshot2));
 
-        assert_eq!(vec![n("1")], act.primary_col_values);
+        let primary_col_values1 = PrimaryColValues::new(vec![n("1")]);
+
+        assert_eq!(vec![&primary_col_values1], act.primary_col_values.iter().collect_vec());
 
         assert_eq!(1, act.row_diffs1.len());
-        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, n("1"), "name"));
+        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, &primary_col_values1, "name"));
 
         assert_eq!(1, act.row_diffs2.len());
-        assert_eq!(&Added(s("Jane")), mk_act(&act.row_diffs2, n("1"), "name"));
+        assert_eq!(&Added(s("Jane")), mk_act(&act.row_diffs2, &primary_col_values1, "name"));
     }
 
     #[test]
     fn test_row_2_and_row_1() {
-        let rows1 = vec![RowSnapshot::new(vec![n("1"), s("John")]), RowSnapshot::new(vec![n("2"), s("Jack")])];
+        let rows1 = vec![RowSnapshot::new(vec![n("1")], vec![s("John")]), RowSnapshot::new(vec![n("2")], vec![s("Jack")])];
         let table_snapshot1 = mk_table_snapshot("user", "id", vec!["name"], rows1);
 
-        let rows2 = vec![RowSnapshot::new(vec![n("1"), s("Jane")])];
+        let rows2 = vec![RowSnapshot::new(vec![n("1")], vec![s("Jane")])];
         let table_snapshot2 = mk_table_snapshot("user", "id", vec!["name"], rows2);
 
         let act = create_table_diff(Some(&table_snapshot1), Some(&table_snapshot2));
 
-        assert_eq!(vec![n("1"), n("2")], act.primary_col_values);
+        let primary_col_values1 = PrimaryColValues::new(vec![n("1")]);
+        let primary_col_values2 = PrimaryColValues::new(vec![n("2")]);
+
+        assert_eq!(vec![&primary_col_values1, &primary_col_values2], act.primary_col_values.iter().collect_vec());
 
         assert_eq!(2, act.row_diffs1.len());
-        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, n("1"), "name"));
-        assert_eq!(&Deleted(s("Jack")), mk_act(&act.row_diffs1, n("2"), "name"));
+        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, &primary_col_values1, "name"));
+        assert_eq!(&Deleted(s("Jack")), mk_act(&act.row_diffs1, &primary_col_values2, "name"));
 
         assert_eq!(1, act.row_diffs2.len());
-        assert_eq!(&Added(s("Jane")), mk_act(&act.row_diffs2, n("1"), "name"));
+        assert_eq!(&Added(s("Jane")), mk_act(&act.row_diffs2, &primary_col_values1, "name"));
     }
 
     #[test]
     fn test_row_1_and_row_2() {
-        let rows1 = vec![RowSnapshot::new(vec![n("1"), s("John")])];
+        let rows1 = vec![RowSnapshot::new(vec![n("1")], vec![s("John")])];
         let table_snapshot1 = mk_table_snapshot("user", "id", vec!["name"], rows1);
 
-        let rows2 = vec![RowSnapshot::new(vec![n("1"), s("John")]), RowSnapshot::new(vec![n("2"), s("Jack")])];
+        let rows2 = vec![RowSnapshot::new(vec![n("1")], vec![s("John")]), RowSnapshot::new(vec![n("2")], vec![s("Jack")])];
         let table_snapshot2 = mk_table_snapshot("user", "id", vec!["name"], rows2);
 
         let act = create_table_diff(Some(&table_snapshot1), Some(&table_snapshot2));
 
-        assert_eq!(vec![n("2")], act.primary_col_values);
+        let primary_col_values2 = PrimaryColValues::new(vec![n("2")]);
+
+        assert_eq!(vec![&primary_col_values2], act.primary_col_values.iter().collect_vec());
 
         assert_eq!(0, act.row_diffs1.len());
 
         assert_eq!(1, act.row_diffs2.len());
-        assert_eq!(&Added(s("Jack")), mk_act(&act.row_diffs2, n("2"), "name"));
+        assert_eq!(&Added(s("Jack")), mk_act(&act.row_diffs2, &primary_col_values2, "name"));
     }
 
     #[test]
     fn test_row_1_and_row_1_nomatch_cols() {
-        let rows1 = vec![RowSnapshot::new(vec![n("1"), s("John")])];
+        let rows1 = vec![RowSnapshot::new(vec![n("1")], vec![s("John")])];
         let table_snapshot1 = mk_table_snapshot("user", "id", vec!["name"], rows1);
 
-        let rows2 = vec![RowSnapshot::new(vec![n("1"), n("39")])];
+        let rows2 = vec![RowSnapshot::new(vec![n("1")], vec![n("39")])];
         let table_snapshot2 = mk_table_snapshot("user", "id", vec!["age"], rows2);
 
         let act = create_table_diff(Some(&table_snapshot1), Some(&table_snapshot2));
 
-        assert_eq!(vec![n("1")], act.primary_col_values);
+        let primary_col_values1 = PrimaryColValues::new(vec![n("1")]);
+
+        assert_eq!(vec![&primary_col_values1], act.primary_col_values.iter().collect_vec());
 
         assert_eq!(1, act.row_diffs1.len());
-        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, n("1"), "name"));
-        assert_eq!(&NoValue, mk_act(&act.row_diffs1, n("1"), "age"));
+        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, &primary_col_values1, "name"));
+        assert_eq!(&NoValue, mk_act(&act.row_diffs1, &primary_col_values1, "age"));
 
         assert_eq!(1, act.row_diffs2.len());
-        assert_eq!(&NoValue, mk_act(&act.row_diffs2, n("1"), "name"));
-        assert_eq!(&Added(n("39")), mk_act(&act.row_diffs2, n("1"), "age"));
+        assert_eq!(&NoValue, mk_act(&act.row_diffs2, &primary_col_values1, "name"));
+        assert_eq!(&Added(n("39")), mk_act(&act.row_diffs2, &primary_col_values1, "age"));
     }
 
     #[test]
     fn test_row_1_and_row_1_primary_value_mismatch() {
-        let rows1 = vec![RowSnapshot::new(vec![n("1"), s("John")])];
+        let rows1 = vec![RowSnapshot::new(vec![n("1")], vec![s("John")])];
         let table_snapshot1 = mk_table_snapshot("user", "id", vec!["name"], rows1);
 
-        let rows2 = vec![RowSnapshot::new(vec![n("2"), s("Jane")])];
+        let rows2 = vec![RowSnapshot::new(vec![n("2")], vec![s("Jane")])];
         let table_snapshot2 = mk_table_snapshot("user", "id", vec!["name"], rows2);
 
         let act = create_table_diff(Some(&table_snapshot1), Some(&table_snapshot2));
 
-        assert_eq!(vec![n("1"), n("2")], act.primary_col_values);
+        let primary_col_values1 = PrimaryColValues::new(vec![n("1")]);
+        let primary_col_values2 = PrimaryColValues::new(vec![n("2")]);
+
+        assert_eq!(vec![&primary_col_values1, &primary_col_values2], act.primary_col_values.iter().collect_vec());
 
         assert_eq!(1, act.row_diffs1.len());
-        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, n("1"), "name"));
+        assert_eq!(&Deleted(s("John")), mk_act(&act.row_diffs1, &primary_col_values1, "name"));
 
         assert_eq!(1, act.row_diffs2.len());
-        assert_eq!(&Added(s("Jane")), mk_act(&act.row_diffs2, n("2"), "name"));
+        assert_eq!(&Added(s("Jane")), mk_act(&act.row_diffs2, &primary_col_values2, "name"));
+    }
+
+    #[test]
+    fn test_row_0_and_row_1_multi_primary_cols() {
+        let rows2 = vec![RowSnapshot::new(vec![n("123"), n("789")], vec![s("John")])];
+        let table_snapshot2 = mk_table_snapshot("user", "id-code", vec!["name"], rows2);
+
+        let act = create_table_diff(None, Some(&table_snapshot2));
+
+        let primary_col_values1 = PrimaryColValues::new(vec![n("123"), n("789")]);
+
+        assert_eq!(vec![&primary_col_values1], act.primary_col_values.iter().collect_vec());
+
+        assert_eq!(0, act.row_diffs1.len());
+
+        assert_eq!(1, act.row_diffs2.len());
+        assert_eq!(&Added(s("John")), mk_act(&act.row_diffs2, &primary_col_values1, "name"));
     }
 }

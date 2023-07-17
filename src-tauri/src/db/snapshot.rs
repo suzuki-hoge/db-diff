@@ -179,8 +179,8 @@ mod tests {
         assert_eq!(0, table_snapshots.len());
 
         // insert
-        let row_snapshot1 = RowSnapshot::new(vec![n("1"), s("123"), n("1200")]);
-        let row_snapshot2 = RowSnapshot::new(vec![n("2"), s("456"), n("560")]);
+        let row_snapshot1 = RowSnapshot::new(vec![n("1")], vec![s("123"), n("1200")]);
+        let row_snapshot2 = RowSnapshot::new(vec![n("2")], vec![s("456"), n("560")]);
         let table_snapshot =
             TableSnapshot::new(&table_name, "id".to_string(), vec!["code".to_string(), "price".to_string()], vec![row_snapshot1, row_snapshot2]);
         insert_table_snapshot(&conn, &snapshot_id, &table_snapshot)?;
