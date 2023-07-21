@@ -13,19 +13,19 @@ const colors = {
   none: styles.none,
 }
 
-interface TRProps {
+interface ColsRowProps {
   primaryValue: string
   colNames: string[]
   rowDiff?: Record<string, { status: 'stay' | 'added' | 'deleted' | 'none'; value: string }>
   n: number
 }
 
-const TR: FC<TRProps> = (props) => {
+const ColsRow: FC<ColsRowProps> = (props) => {
   return (
     <tr>
       {props.n === 1 && <td rowSpan={2}>{props.primaryValue}</td>}
       {props.colNames.map((colName, i) =>
-        props.rowDiff != null ? (
+        props.rowDiff !== undefined ? (
           colName in props.rowDiff ? (
             <td key={i} className={colors[props.rowDiff[colName].status]}>
               {props.rowDiff[colName].value}
@@ -38,6 +38,29 @@ const TR: FC<TRProps> = (props) => {
         )
       )}
     </tr>
+  )
+}
+
+interface PrimaryOnlyRowProps {
+  primaryValue: string
+  rowDiff1: boolean
+  rowDiff2: boolean
+}
+
+const PrimaryOnlyRow: FC<PrimaryOnlyRowProps> = (props) => {
+  return (
+    <>
+      {props.rowDiff1 && (
+        <tr>
+          <td className={[styles.primaryOnly, colors.deleted].join(' ')}>{props.primaryValue}</td>
+        </tr>
+      )}
+      {props.rowDiff2 && (
+        <tr>
+          <td className={[styles.primaryOnly, colors.added].join(' ')}>{props.primaryValue}</td>
+        </tr>
+      )}
+    </>
   )
 }
 
@@ -55,24 +78,34 @@ export const DiffContent: FC<Props> = (props) => {
           </tr>
         </thead>
         <tbody>
-          {props.tableDiff.primaryValues.map((primaryValue, i) => (
-            <Fragment key={i}>
-              <TR
-                key={`${i}-1`}
-                primaryValue={primaryValue}
-                colNames={props.tableDiff.colNames}
-                rowDiff={props.tableDiff.rowDiffs1[primaryValue]}
-                n={1}
-              />
-              <TR
-                key={`${i}-2`}
-                primaryValue={primaryValue}
-                colNames={props.tableDiff.colNames}
-                rowDiff={props.tableDiff.rowDiffs2[primaryValue]}
-                n={2}
-              />
-            </Fragment>
-          ))}
+          {props.tableDiff.primaryValues.map((primaryValue, i) =>
+            props.tableDiff.colNames.length !== 0 ? (
+              <Fragment key={i}>
+                <ColsRow
+                  key={`${i}-1`}
+                  primaryValue={primaryValue}
+                  colNames={props.tableDiff.colNames}
+                  rowDiff={props.tableDiff.rowDiffs1[primaryValue]}
+                  n={1}
+                />
+                <ColsRow
+                  key={`${i}-2`}
+                  primaryValue={primaryValue}
+                  colNames={props.tableDiff.colNames}
+                  rowDiff={props.tableDiff.rowDiffs2[primaryValue]}
+                  n={2}
+                />
+              </Fragment>
+            ) : (
+              <Fragment key={i}>
+                <PrimaryOnlyRow
+                  primaryValue={primaryValue}
+                  rowDiff1={props.tableDiff.rowDiffs1[primaryValue] !== undefined}
+                  rowDiff2={props.tableDiff.rowDiffs2[primaryValue] !== undefined}
+                />
+              </Fragment>
+            )
+          )}
         </tbody>
       </table>
     </div>

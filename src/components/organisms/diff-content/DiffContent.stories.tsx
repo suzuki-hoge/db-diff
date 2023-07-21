@@ -343,3 +343,50 @@ export const RowsModifiedMultiUniqueColumn: Story = {
     },
   },
 }
+
+export const RowAddOnlyUniqueColumn: Story = {
+  args: {
+    tableDiff: {
+      tableName: 'relations',
+      primaryValues: ['1-"001"'],
+      primaryColName: 'id-code',
+      colNames: [],
+      rowDiffs1: {
+        '1-"001"': {},
+      },
+      rowDiffs2: {},
+    },
+  },
+}
+
+export const RowDeletedOnlyUniqueColumn: Story = {
+  args: {
+    tableDiff: {
+      tableName: 'relations',
+      primaryValues: ['1-"002"'],
+      primaryColName: 'id-code',
+      colNames: [],
+      rowDiffs1: {},
+      rowDiffs2: {
+        '1-"002"': {},
+      },
+    },
+  },
+}
+
+export const RowModifiedOnlyUniqueColumn: Story = {
+  args: {
+    tableDiff: {
+      tableName: 'relations',
+      primaryValues: ['1-"001"', '1-"002"'],
+      primaryColName: 'id-code',
+      colNames: [],
+      rowDiffs1: {
+        '1-"001"': {},
+      },
+      rowDiffs2: {
+        '1-"002"': {},
+      },
+    },
+  },
+}

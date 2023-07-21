@@ -37,6 +37,7 @@ table {
       border-right: solid 1px var(--color-frame);
       border-top: solid 1px var(--color-frame);
       padding: 0 1em;
+      height: 2rem;
     }
 
     td:last-child {
@@ -45,6 +46,15 @@ table {
   }
 
   tr:last-child td:last-child {
+    border-bottom-right-radius: calc(#{var(--radius-flame)} - 1px);
+  }
+
+  .primaryOnly {
+    height: 4rem;
+  }
+
+  tr:last-child .primaryOnly:last-child {
+    border-bottom-left-radius: calc(#{var(--radius-flame)} - 1px);
     border-bottom-right-radius: calc(#{var(--radius-flame)} - 1px);
   }
 }
