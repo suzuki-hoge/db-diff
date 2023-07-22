@@ -7,7 +7,7 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "table-snapshot",
+    "productName": "db-diff",
     "version": "0.0.0"
   },
   "tauri": {
@@ -21,13 +21,9 @@
     "bundle": {
       "active": true,
       "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
+        "icons/icon.png"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "suzuki-hoge.com.github",
       "targets": "all"
     },
     "security": {
@@ -40,7 +36,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "table-snapshot",
+        "title": "db-diff",
         "width": 800,
         "height": 600
       }
