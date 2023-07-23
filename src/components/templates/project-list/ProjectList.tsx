@@ -81,6 +81,21 @@ export const ProjectList: FC<Props> = (props) => {
               )}
             </div>
           ))}
+          {props.projects.length === 0 && (
+            <div className={styles.empty}>
+              <p>接続設定がありません</p>
+              <p>
+                チュートリアルツアー{' '}
+                <IconHelp
+                  variant={'small'}
+                  onClick={() => {
+                    setIsTouring(true)
+                  }}
+                />{' '}
+                を見て接続設定を作成しましょう
+              </p>
+            </div>
+          )}
         </div>
       </div>
       <TourWrapper

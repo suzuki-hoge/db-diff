@@ -36,7 +36,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "db-diff",
+        "title": "DB Diff",
         "width": 800,
         "height": 600
       }

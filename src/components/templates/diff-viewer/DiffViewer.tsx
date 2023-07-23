@@ -39,18 +39,22 @@ export const DiffViewer: FC<Props> = (props) => {
           }
           locals={
             <>
-              <IconSearch
-                variant={'large'}
-                onClick={() => {
-                  setIsModalOpen(true)
-                }}
-              />
-              <IconHelp
-                variant={'large'}
-                onClick={() => {
-                  setIsTouring(true)
-                }}
-              />
+              {props.tableDiffs.length !== 0 && (
+                <IconSearch
+                  variant={'large'}
+                  onClick={() => {
+                    setIsModalOpen(true)
+                  }}
+                />
+              )}
+              {props.tableDiffs.length !== 0 && (
+                <IconHelp
+                  variant={'large'}
+                  onClick={() => {
+                    setIsTouring(true)
+                  }}
+                />
+              )}
             </>
           }
         />
@@ -61,6 +65,12 @@ export const DiffViewer: FC<Props> = (props) => {
             ) : (
               <Fragment key={tableDiff.tableName}></Fragment>
             )
+          )}
+          {props.tableDiffs.length === 0 && (
+            <div className={styles.empty}>
+              <p>2 つのスナップショットに差分がありません</p>
+              <p>新たなスナップショットを作成して、別の差分表示を見てみましょう</p>
+            </div>
           )}
         </div>
         <ModalWindow isOpen={isModalOpen} setIsOpen={setIsModalOpen}>
@@ -85,7 +95,7 @@ export const DiffViewer: FC<Props> = (props) => {
         </ModalWindow>
       </div>
       <TourWrapper
-        steps={steps(props.tableDiffs.length === 0)}
+        steps={steps}
         isTouring={isTouring}
         onClose={() => {
           setIsTouring(false)
@@ -95,27 +105,24 @@ export const DiffViewer: FC<Props> = (props) => {
   )
 }
 
-const steps: (isEmpty: boolean) => ReactourStep[] = (isEmpty) => {
-  return isEmpty
-    ? [
-        {
-          content: (
-            <>
-              <span>2 つのスナップショットに差分がありません</span>
-              <br />
-              <br />
-              <span>新たなスナップショットを作成して、別の差分表示をみてみましょう</span>
-            </>
-          ),
-        },
-      ]
-    : [
-        {
-          selector: '.icon_search',
-          content: '表示するテーブルをフィルタリングできます',
-        },
-        {
-          content: '主キーごとに変更差分が表示されます',
-        },
-      ]
-}
+const steps: ReactourStep[] = [
+  {
+    selector: '.icon_search',
+    content: '表示するテーブルをフィルタリングできます',
+  },
+  {
+    content: '主キーごとに変更差分が表示されます',
+  },
+  {
+    content: (
+      <>
+        <span>
+          主キーとみなせるカラム構成については <a href={'#'}>GitHub のドキュメント</a> を確認してください
+        </span>
+      </>
+    ),
+  },
+  {
+    content: '主キーのないテーブルはスナップショット作成時に除外されます',
+  },
+]

@@ -106,6 +106,21 @@ export const SnapshotList: FC<Props> = (props) => {
                 )}
               </div>
             ))}
+            {props.snapshotSummaries.length === 0 && (
+              <div className={styles.empty}>
+                <p>スナップショットがありません</p>
+                <p>
+                  チュートリアルツアー{' '}
+                  <IconHelp
+                    variant={'small'}
+                    onClick={() => {
+                      setIsTouring(true)
+                    }}
+                  />{' '}
+                  を見てスナップショットを作成しましょう
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
