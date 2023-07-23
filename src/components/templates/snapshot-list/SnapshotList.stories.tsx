@@ -37,5 +37,6 @@ export const Component: Story = {
         createAt: '2023/04/04 12:34:56',
       },
     ],
+    remove: console.log,
   },
 }

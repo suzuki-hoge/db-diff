@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/tauri'
 import { type SnapshotSummary } from '../types'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { SnapshotList } from '../components/templates/snapshot-list/SnapshotList'
+import { toast } from 'react-hot-toast'
 
 export const SnapshotListPage: FC = () => {
   const [snapshotSummaries, setSnapshotSummaries] = useState<SnapshotSummary[]>([])
@@ -15,15 +16,20 @@ export const SnapshotListPage: FC = () => {
       .then((data) => {
         setSnapshotSummaries(data)
       })
-      .catch(console.log)
+      .catch((e: string) => {
+        navigate('/error', { state: { message: e } })
+      })
   }, [location])
 
   const remove: (snapshotId: string) => void = (snapshotId) => {
     invoke('delete_snapshot_summary_command', { snapshotId })
       .then(() => {
+        toast.success('削除しました')
         navigate('/snapshot-summary/list')
       })
-      .catch(console.log)
+      .catch((e: string) => {
+        navigate('/error', { state: { message: e } })
+      })
   }
 
   return <SnapshotList snapshotSummaries={snapshotSummaries} remove={remove} />

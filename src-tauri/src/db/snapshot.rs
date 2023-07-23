@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::anyhow;
 use diesel::prelude::*;
 use diesel::{RunQueryDsl, SqliteConnection};
 
@@ -36,13 +36,13 @@ impl SnapshotSummaryRecord {
 
 pub fn all_snapshot_summaries(conn: &SqliteConnection, project_id: &ProjectId) -> anyhow::Result<Vec<SnapshotSummary>> {
     let rows: Vec<SnapshotSummaryRecord> =
-        schema::snapshot_summaries::table.filter(schema::snapshot_summaries::project_id.eq(project_id)).load(conn).context("error")?;
+        schema::snapshot_summaries::table.filter(schema::snapshot_summaries::project_id.eq(project_id)).load(conn).map_err(|e| anyhow!(e))?;
     Ok(rows.into_iter().map(|row| row.to()).collect())
 }
 
 pub fn insert_snapshot_summary(conn: &SqliteConnection, project_id: &ProjectId, snapshot_summary: &SnapshotSummary) -> anyhow::Result<()> {
     let record = SnapshotSummaryRecord::from(snapshot_summary, project_id);
-    diesel::insert_into(schema::snapshot_summaries::table).values(&record).execute(conn).context("error")?;
+    diesel::insert_into(schema::snapshot_summaries::table).values(&record).execute(conn).map_err(|e| anyhow!(e))?;
     Ok(())
 }
 
@@ -50,12 +50,12 @@ pub fn update_snapshot_summary(conn: &SqliteConnection, snapshot_summary: &Snaps
     diesel::update(schema::snapshot_summaries::table.find(&snapshot_summary.snapshot_id))
         .set(schema::snapshot_summaries::snapshot_name.eq(&snapshot_summary.snapshot_name))
         .execute(conn)
-        .context("error")?;
+        .map_err(|e| anyhow!(e))?;
     Ok(())
 }
 
 pub fn delete_snapshot_summary(conn: &SqliteConnection, snapshot_id: &SnapshotId) -> anyhow::Result<()> {
-    diesel::delete(schema::snapshot_summaries::table.find(snapshot_id)).execute(conn).context("error")?;
+    diesel::delete(schema::snapshot_summaries::table.find(snapshot_id)).execute(conn).map_err(|e| anyhow!(e))?;
     Ok(())
 }
 
@@ -79,13 +79,13 @@ impl TableSnapshotRecord {
 
 pub fn find_table_snapshots(conn: &SqliteConnection, snapshot_id: &SnapshotId) -> anyhow::Result<Vec<TableSnapshot>> {
     let rows: Vec<TableSnapshotRecord> =
-        schema::table_snapshots::table.filter(schema::table_snapshots::snapshot_id.eq(snapshot_id)).load(conn).context("error")?;
+        schema::table_snapshots::table.filter(schema::table_snapshots::snapshot_id.eq(snapshot_id)).load(conn).map_err(|e| anyhow!(e))?;
     Ok(rows.into_iter().map(|row| row.to()).collect())
 }
 
 pub fn insert_table_snapshot(conn: &SqliteConnection, snapshot_id: &SnapshotId, table_snapshot: &TableSnapshot) -> anyhow::Result<()> {
     let record = TableSnapshotRecord::from(table_snapshot, snapshot_id);
-    diesel::insert_into(schema::table_snapshots::table).values(&record).execute(conn).context("error")?;
+    diesel::insert_into(schema::table_snapshots::table).values(&record).execute(conn).map_err(|e| anyhow!(e))?;
     Ok(())
 }
 

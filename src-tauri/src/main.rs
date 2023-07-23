@@ -23,6 +23,7 @@ fn main() -> anyhow::Result<()> {
             command::snapshot::delete_snapshot_summary_command,
             command::snapshot::dump_snapshot_command,
             command::diff::find_snapshot_diff_command,
+            command::diff::create_snapshot_diff_command,
         ])
         .setup(|app| {
             let state = AppState::new()?;

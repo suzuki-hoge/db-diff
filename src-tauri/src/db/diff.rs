@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::anyhow;
 use diesel::prelude::*;
 use diesel::{RunQueryDsl, SqliteConnection};
 
@@ -11,7 +11,7 @@ pub fn find_snapshot_diff(conn: &SqliteConnection, snapshot_id1: &SnapshotId, sn
         .select(schema::snapshot_diffs::data)
         .filter(schema::snapshot_diffs::snapshot_id1.eq(snapshot_id1).and(schema::snapshot_diffs::snapshot_id2.eq(snapshot_id2)))
         .load(conn)
-        .context("error")?;
+        .map_err(|e| anyhow!(e))?;
     Ok(rows.into_iter().next().map(|data| serde_json::from_str(&data).unwrap()))
 }
 
@@ -24,7 +24,7 @@ pub fn insert_snapshot_diff(conn: &SqliteConnection, snapshot_diff: &SnapshotDif
             schema::snapshot_diffs::data.eq(serde_json::to_string(snapshot_diff).unwrap()),
         ))
         .execute(conn)
-        .context("error")?;
+        .map_err(|e| anyhow!(e))?;
     Ok(())
 }
 

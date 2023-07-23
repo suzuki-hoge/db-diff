@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::anyhow;
 use diesel::prelude::*;
 use diesel::{RunQueryDsl, SqliteConnection};
 
@@ -55,13 +55,13 @@ impl ProjectRecord {
 }
 
 pub fn all_projects(conn: &SqliteConnection) -> anyhow::Result<Vec<Project>> {
-    let rows: Vec<ProjectRecord> = schema::projects::table.load(conn).context("error")?;
+    let rows: Vec<ProjectRecord> = schema::projects::table.load(conn).map_err(|e| anyhow!(e))?;
     Ok(rows.into_iter().map(|row| row.to()).collect())
 }
 
 pub fn insert_project(conn: &SqliteConnection, project: &Project) -> anyhow::Result<()> {
     let record = ProjectRecord::from(project);
-    diesel::insert_into(schema::projects::table).values(&record).execute(conn).context("error")?;
+    diesel::insert_into(schema::projects::table).values(&record).execute(conn).map_err(|e| anyhow!(e))?;
     Ok(())
 }
 
@@ -78,12 +78,12 @@ pub fn update_project(conn: &SqliteConnection, project: &Project) -> anyhow::Res
             schema::projects::schema.eq(&record.schema),
         ))
         .execute(conn)
-        .context("error")?;
+        .map_err(|e| anyhow!(e))?;
     Ok(())
 }
 
 pub fn delete_project(conn: &SqliteConnection, project_id: &ProjectId) -> anyhow::Result<()> {
-    diesel::delete(schema::projects::table.find(project_id)).execute(conn).context("error")?;
+    diesel::delete(schema::projects::table.find(project_id)).execute(conn).map_err(|e| anyhow!(e))?;
     Ok(())
 }
 

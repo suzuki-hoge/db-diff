@@ -16,6 +16,6 @@ type Story = StoryObj<typeof meta>
 
 export const Component: Story = {
   args: {
-    insert: console.log,
+    dump: console.log,
   },
 }

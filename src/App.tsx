@@ -8,10 +8,13 @@ import { SnapshotCreatePage } from './page/SnapshotCreatePage'
 import { SnapshotListPage } from './page/SnapshotListPage'
 import { SnapshotUpdatePage } from './page/SnapshotUpdatePage'
 import { DiffPage } from './page/DiffPage'
+import { Toaster } from 'react-hot-toast'
+import { ErrorPage } from './page/ErrorPage'
 
 export const App: FC = () => {
   return (
     <div className="app">
+      <Toaster />
       <Router>
         <Routes>
           <Route path="/" element={<ProjectListPage />} />
@@ -22,6 +25,7 @@ export const App: FC = () => {
           <Route path="/snapshot-summary/create" element={<SnapshotCreatePage />} />
           <Route path="/snapshot-summary/update" element={<SnapshotUpdatePage />} />
           <Route path="/diff" element={<DiffPage />} />
+          <Route path="/error" element={<ErrorPage />} />
         </Routes>
       </Router>
     </div>

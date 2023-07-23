@@ -96,50 +96,59 @@ pub fn find_snapshot_diff_command(
     let conn = app_state.conn.lock().unwrap();
 
     let snapshot_diff = match find_snapshot_diff(&conn, &snapshot_id1, &snapshot_id2).map_err(|e| e.to_string())? {
-        Some(snapshot_diff) => snapshot_diff,
-        None => {
-            let table_snapshots1 = find_table_snapshots(&conn, &snapshot_id1).map_err(|e| e.to_string())?;
-            let table_snapshots1: HashMap<&TableName, &TableSnapshot> = table_snapshots1
-                .iter()
-                .into_group_map_by(|table_snapshot| &table_snapshot.table_name)
-                .iter()
-                .map(|(&table_name, table_snapshots)| (table_name, table_snapshots[0]))
-                .collect();
+        Some(snapshot_diff) => Ok(snapshot_diff),
+        None => Err("snapshot diff not created".to_string()),
+    }?;
 
-            let table_snapshots2 = find_table_snapshots(&conn, &snapshot_id2).map_err(|e| e.to_string())?;
-            let table_snapshots2: HashMap<&TableName, &TableSnapshot> = table_snapshots2
-                .iter()
-                .into_group_map_by(|table_snapshot| &table_snapshot.table_name)
-                .iter()
-                .map(|(&table_name, table_snapshots)| (table_name, table_snapshots[0]))
-                .collect();
+    Ok(SnapshotDiffJson::from(snapshot_diff))
+}
 
-            let mut table_names1 = table_snapshots1.keys().cloned().collect_vec();
-            let mut table_names2 = table_snapshots2.keys().cloned().collect_vec();
-            table_names1.append(&mut table_names2);
+#[tauri::command]
+pub fn create_snapshot_diff_command(
+    app_state: State<'_, AppState>,
+    snapshot_id1: SnapshotId,
+    snapshot_id2: SnapshotId,
+) -> Result<SnapshotDiffJson, String> {
+    let conn = app_state.conn.lock().unwrap();
 
-            let snapshot_diff = SnapshotDiff::new(
-                &create_diff_id(),
-                &snapshot_id1,
-                &snapshot_id2,
-                table_names1
-                    .into_iter()
-                    .unique()
-                    .map(|table_name| {
-                        create_table_diff(
-                            table_snapshots1.get(table_name).map(|table_snapshot| table_snapshot.deref()),
-                            table_snapshots2.get(table_name).map(|table_snapshot| table_snapshot.deref()),
-                        )
-                    })
-                    .filter(|table_diff| !table_diff.empty())
-                    .collect(),
-            );
+    let table_snapshots1 = find_table_snapshots(&conn, &snapshot_id1).map_err(|e| e.to_string())?;
+    let table_snapshots1: HashMap<&TableName, &TableSnapshot> = table_snapshots1
+        .iter()
+        .into_group_map_by(|table_snapshot| &table_snapshot.table_name)
+        .iter()
+        .map(|(&table_name, table_snapshots)| (table_name, table_snapshots[0]))
+        .collect();
 
-            insert_snapshot_diff(&conn, &snapshot_diff).map_err(|e| e.to_string())?;
+    let table_snapshots2 = find_table_snapshots(&conn, &snapshot_id2).map_err(|e| e.to_string())?;
+    let table_snapshots2: HashMap<&TableName, &TableSnapshot> = table_snapshots2
+        .iter()
+        .into_group_map_by(|table_snapshot| &table_snapshot.table_name)
+        .iter()
+        .map(|(&table_name, table_snapshots)| (table_name, table_snapshots[0]))
+        .collect();
 
-            snapshot_diff
-        }
-    };
+    let mut table_names1 = table_snapshots1.keys().cloned().collect_vec();
+    let mut table_names2 = table_snapshots2.keys().cloned().collect_vec();
+    table_names1.append(&mut table_names2);
+
+    let snapshot_diff = SnapshotDiff::new(
+        &create_diff_id(),
+        &snapshot_id1,
+        &snapshot_id2,
+        table_names1
+            .into_iter()
+            .unique()
+            .map(|table_name| {
+                create_table_diff(
+                    table_snapshots1.get(table_name).map(|table_snapshot| table_snapshot.deref()),
+                    table_snapshots2.get(table_name).map(|table_snapshot| table_snapshot.deref()),
+                )
+            })
+            .filter(|table_diff| !table_diff.empty())
+            .collect(),
+    );
+
+    insert_snapshot_diff(&conn, &snapshot_diff).map_err(|e| e.to_string())?;
 
     Ok(SnapshotDiffJson::from(snapshot_diff))
 }

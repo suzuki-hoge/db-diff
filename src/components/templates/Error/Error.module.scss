@@ -1,0 +1,19 @@
+.template {
+  display: flex;
+  flex-direction: column;
+  row-gap: 1rem;
+
+  h2, p, pre {
+    margin: 0;
+  }
+
+  h2 {
+    color: #f55;
+  }
+
+  pre {
+    background-color: #eee;
+    padding: 1rem;
+    white-space: break-spaces;
+  }
+}

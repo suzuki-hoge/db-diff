@@ -47,5 +47,7 @@ export const Component: Story = {
         schema: 'data',
       },
     ],
+    select: console.log,
+    remove: console.log,
   },
 }
