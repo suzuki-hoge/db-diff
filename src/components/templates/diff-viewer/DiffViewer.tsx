@@ -6,7 +6,7 @@ import { DiffContent } from '../../organisms/diff-content/DiffContent'
 import { IconVisible } from '../../atoms/icon-visible/IconVisible'
 import { Header } from '../../molecules/header/Header'
 import { IconBack } from '../../atoms/icon-back/IconBack'
-import { ModalWindow } from '../../molecules/ModalWindow/ModalWindow'
+import { ModalWrapper } from '../../molecules/ModalWrapper/ModalWrapper'
 import { IconSearch } from '../../atoms/icon-search/IconSearch'
 import { useNavigate } from 'react-router-dom'
 import { TourWrapper } from '../../atoms/tour-wrapper/TourWrapper'
@@ -73,12 +73,29 @@ export const DiffViewer: FC<Props> = (props) => {
             </div>
           )}
         </div>
-        <ModalWindow isOpen={isModalOpen} setIsOpen={setIsModalOpen}>
+        <ModalWrapper isOpen={isModalOpen} setIsOpen={setIsModalOpen}>
           {props.tableDiffs
             .map((diff) => diff.tableName)
             .map((tableName, i) => (
               <div key={i} className={styles.item}>
-                <span>{tableName}</span>
+                {ignoreTableNames.includes(tableName) ? (
+                  <span className={styles.gray}>{tableName}</span>
+                ) : (
+                  <span
+                    className={styles.anchor}
+                    onClick={() => {
+                      const target = document.getElementById(tableName)
+
+                      if (target !== null) {
+                        target.scrollIntoView({ behavior: 'smooth' })
+                      }
+
+                      setIsModalOpen(false)
+                    }}
+                  >
+                    {tableName}
+                  </span>
+                )}
                 <IconVisible
                   variant={'medium'}
                   visible={!ignoreTableNames.includes(tableName)}
@@ -92,7 +109,7 @@ export const DiffViewer: FC<Props> = (props) => {
                 />
               </div>
             ))}
-        </ModalWindow>
+        </ModalWrapper>
       </div>
       <TourWrapper
         steps={steps}
@@ -123,6 +140,6 @@ const steps: ReactourStep[] = [
     ),
   },
   {
-    content: '主キーのないテーブルはスナップショット作成時に除外されます',
+    content: '主キーのないテーブルはスナップショット作成時に除外されています',
   },
 ]

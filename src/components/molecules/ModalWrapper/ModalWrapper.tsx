@@ -1,5 +1,5 @@
 import { type FC, type ReactNode } from 'react'
-import styles from './ModalWindow.module.scss'
+import styles from './ModalWrapper.module.scss'
 import Modal from 'react-modal'
 import { IconClose } from '../../atoms/icon-close/IconClose'
 
@@ -10,7 +10,7 @@ interface Props {
   children: ReactNode
 }
 
-export const ModalWindow: FC<Props> = (props) => {
+export const ModalWrapper: FC<Props> = (props) => {
   return (
     <Modal
       className={styles.component}

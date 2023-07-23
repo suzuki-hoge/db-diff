@@ -2,11 +2,14 @@
   display: flex;
   flex-direction: column;
   row-gap: 1rem;
+  height: 100vh;
 
   .component {
     display: flex;
     flex-direction: column;
     row-gap: 2rem;
+    flex: 1;
+    overflow-y: scroll;
 
     .empty {
       display: flex;
@@ -29,7 +32,12 @@
   padding: 0 0.75rem 0 1rem;
   overflow-y: scroll;
 
-  span {
+  span.gray {
+    color: lightgrey;
+    cursor: default;
+  }
+
+  span.anchor {
     cursor: pointer;
   }
 }

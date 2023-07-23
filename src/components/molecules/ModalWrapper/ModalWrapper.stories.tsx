@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react'
 
-import { ModalWindow } from './ModalWindow'
+import { ModalWrapper } from './ModalWrapper'
 import { IconSave } from '../../atoms/icon-save/IconSave'
 
 const meta = {
-  title: 'Molecules/ModalWindow',
-  component: ModalWindow,
+  title: 'Molecules/ModalWrapper',
+  component: ModalWrapper,
   tags: ['autodocs'],
   argTypes: {},
-} satisfies Meta<typeof ModalWindow>
+} satisfies Meta<typeof ModalWrapper>
 
 export default meta
 type Story = StoryObj<typeof meta>

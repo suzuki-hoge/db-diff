@@ -66,7 +66,7 @@ const PrimaryOnlyRow: FC<PrimaryOnlyRowProps> = (props) => {
 
 export const DiffContent: FC<Props> = (props) => {
   return (
-    <div className={styles.component}>
+    <div id={props.tableDiff.tableName} className={styles.component}>
       <span className={styles.label}>{props.tableDiff.tableName}</span>
       <table>
         <thead>
