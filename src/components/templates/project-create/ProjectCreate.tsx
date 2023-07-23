@@ -26,7 +26,9 @@ export const ProjectCreate: FC<Props> = (props) => {
         }
         locals={<></>}
       />
-      <ProjectInput save={props.insert} />
+      <div className={styles.component}>
+        <ProjectInput save={props.insert} />
+      </div>
     </div>
   )
 }

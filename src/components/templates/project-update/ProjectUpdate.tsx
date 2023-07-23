@@ -27,7 +27,9 @@ export const ProjectUpdate: FC<Props> = (props) => {
         }
         locals={<></>}
       />
-      <ProjectInput project={props.project} save={props.update} />
+      <div className={styles.component}>
+        <ProjectInput project={props.project} save={props.update} />
+      </div>
     </div>
   )
 }

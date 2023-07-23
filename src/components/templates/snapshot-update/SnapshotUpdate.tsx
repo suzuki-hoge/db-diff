@@ -27,7 +27,9 @@ export const SnapshotUpdate: FC<Props> = (props) => {
         }
         locals={<></>}
       />
-      <SnapshotInput snapshotSummary={props.snapshotSummary} update={props.update} />
+      <div className={styles.component}>
+        <SnapshotInput snapshotSummary={props.snapshotSummary} update={props.update} />
+      </div>
     </div>
   )
 }

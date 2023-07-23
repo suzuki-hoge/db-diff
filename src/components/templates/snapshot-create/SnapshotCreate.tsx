@@ -25,7 +25,9 @@ export const SnapshotCreate: FC<Props> = (props) => {
         }
         locals={<></>}
       />
-      <SnapshotInput dump={props.dump} />
+      <div className={styles.component}>
+        <SnapshotInput dump={props.dump} />
+      </div>
     </div>
   )
 }
