@@ -15,7 +15,7 @@ export const IconVisible: FC<Props> = (props) => {
     <>
       {visible ? (
         <BsEye
-          className={styles[props.variant]}
+          className={['icon_visible', styles[props.variant]].join(' ')}
           onClick={() => {
             setVisible(!visible)
             props.onClick()
@@ -23,7 +23,7 @@ export const IconVisible: FC<Props> = (props) => {
         />
       ) : (
         <BsEyeSlash
-          className={styles[props.variant]}
+          className={['icon_visible', styles[props.variant]].join(' ')}
           onClick={() => {
             setVisible(!visible)
             props.onClick()

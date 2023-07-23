@@ -8,5 +8,5 @@ interface Props {
 }
 
 export const IconGear: FC<Props> = (props) => {
-  return <BsGear className={styles[props.variant]} onClick={props.onClick} />
+  return <BsGear className={['icon_gear', styles[props.variant]].join(' ')} onClick={props.onClick} />
 }

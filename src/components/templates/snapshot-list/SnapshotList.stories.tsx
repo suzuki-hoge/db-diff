@@ -13,6 +13,7 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
+
 export const Component: Story = {
   args: {
     snapshotSummaries: [
@@ -37,6 +38,13 @@ export const Component: Story = {
         createAt: '2023/04/04 12:34:56',
       },
     ],
+    remove: console.log,
+  },
+}
+
+export const Empty: Story = {
+  args: {
+    snapshotSummaries: [],
     remove: console.log,
   },
 }

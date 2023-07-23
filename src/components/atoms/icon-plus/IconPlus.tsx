@@ -8,5 +8,5 @@ interface Props {
 }
 
 export const IconPlus: FC<Props> = (props) => {
-  return <BsPlusCircle className={styles[props.variant]} onClick={props.onClick} />
+  return <BsPlusCircle className={['icon_plus', styles[props.variant]].join(' ')} onClick={props.onClick} />
 }

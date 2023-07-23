@@ -13,6 +13,7 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
+
 export const Component: Story = {
   args: {
     projects: [
@@ -47,6 +48,14 @@ export const Component: Story = {
         schema: 'data',
       },
     ],
+    select: console.log,
+    remove: console.log,
+  },
+}
+
+export const Empty: Story = {
+  args: {
+    projects: [],
     select: console.log,
     remove: console.log,
   },

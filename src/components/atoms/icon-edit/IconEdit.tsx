@@ -8,5 +8,5 @@ interface Props {
 }
 
 export const IconEdit: FC<Props> = (props) => {
-  return <BsPencil className={styles[props.variant]} onClick={props.onClick} />
+  return <BsPencil className={['icon_edit', styles[props.variant]].join(' ')} onClick={props.onClick} />
 }

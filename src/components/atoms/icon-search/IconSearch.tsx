@@ -8,5 +8,5 @@ interface Props {
 }
 
 export const IconSearch: FC<Props> = (props) => {
-  return <BsSearch className={styles[props.variant]} onClick={props.onClick} />
+  return <BsSearch className={['icon_search', styles[props.variant]].join(' ')} onClick={props.onClick} />
 }

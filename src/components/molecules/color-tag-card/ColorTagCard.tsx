@@ -10,7 +10,7 @@ interface Props {
 
 export const ColorTagCard: FC<Props> = (props) => {
   return (
-    <div className={styles.component} onClick={props.onClick}>
+    <div className={['color_tag_card', styles.component].join(' ')} onClick={props.onClick}>
       <ColorTag variant={props.variant} />
       <span>{props.label}</span>
     </div>

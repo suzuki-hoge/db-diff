@@ -28,11 +28,12 @@ export const DiffPage: FC = () => {
             }
           }
 
-          toast.promise(
-            invoke<SnapshotDiff>('create_snapshot_diff_command', { snapshotId1, snapshotId2 }),
-            { loading: '差分を計算中...', success: '差分を保存しました', error: '計算に失敗しました' },
-            { style: { minWidth: '200px' } },
-          )
+          toast
+            .promise(
+              invoke<SnapshotDiff>('create_snapshot_diff_command', { snapshotId1, snapshotId2 }),
+              { loading: '差分を計算中...', success: '差分を保存しました', error: '計算に失敗しました' },
+              { style: { minWidth: '200px' } }
+            )
             .then((data) => {
               setSnapshotDiff(data)
             })
@@ -45,5 +46,5 @@ export const DiffPage: FC = () => {
       })
   }, [snapshotId1, snapshotId2])
 
-  return snapshotDiff !== undefined ? <DiffViewer tableDiffs={snapshotDiff.tableDiffs} ignoreTableNames={[]} /> : <></>
+  return snapshotDiff !== undefined ? <DiffViewer tableDiffs={snapshotDiff.tableDiffs} /> : <></>
 }

@@ -10,6 +10,7 @@ import { IconVisible } from '../../atoms/icon-visible/IconVisible'
 import { IconPlus } from '../../atoms/icon-plus/IconPlus'
 import { IconClose } from '../../atoms/icon-close/IconClose'
 import { IconSearch } from '../../atoms/icon-search/IconSearch'
+import { IconHelp } from '../../atoms/icon-help/IconHelp'
 
 const meta = {
   title: 'Molecules/Header',
@@ -34,6 +35,7 @@ export const LargeIcons: Story = {
         <IconDelete variant={'large'} onClick={() => {}} />
         <IconVisible variant={'large'} visible={true} onClick={() => {}} />
         <IconClose variant={'large'} onClick={() => {}} />
+        <IconHelp variant={'large'} onClick={() => {}} />
       </>
     ),
   },
@@ -52,6 +54,7 @@ export const MediumIcons: Story = {
         <IconDelete variant={'medium'} onClick={() => {}} />
         <IconVisible variant={'medium'} visible={true} onClick={() => {}} />
         <IconClose variant={'medium'} onClick={() => {}} />
+        <IconHelp variant={'medium'} onClick={() => {}} />
       </>
     ),
   },
@@ -70,6 +73,7 @@ export const SmallIcons: Story = {
         <IconDelete variant={'small'} onClick={() => {}} />
         <IconVisible variant={'small'} visible={true} onClick={() => {}} />
         <IconClose variant={'small'} onClick={() => {}} />
+        <IconHelp variant={'small'} onClick={() => {}} />
       </>
     ),
   },

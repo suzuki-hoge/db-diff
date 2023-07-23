@@ -66,6 +66,11 @@ const tableNames = [
 export const Component: Story = {
   args: {
     tableDiffs: tableNames.map((tableName) => ({ tableName, ...tableDiff })),
-    ignoreTableNames: [],
+  },
+}
+
+export const Empty: Story = {
+  args: {
+    tableDiffs: [],
   },
 }
