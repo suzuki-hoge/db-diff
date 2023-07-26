@@ -20,6 +20,7 @@ export const Component: Story = {
       {
         projectId: '92B07638-8EBA-471D-BDC1-71685B21EFE4',
         name: 'My Laravel Project',
+        color: '#c2e0c6',
         rdbms: 'MySQL',
         user: 'admin',
         password: 'admin-pw',
@@ -30,6 +31,7 @@ export const Component: Story = {
       {
         projectId: '5594251B-5F1B-4706-9521-324BDF343B33',
         name: 'Tutorial App',
+        color: '#c2e0c6',
         rdbms: 'MySQL',
         user: 'admin',
         password: 'admin-pw',
@@ -40,6 +42,7 @@ export const Component: Story = {
       {
         projectId: 'EBFE34CE-AB67-4B01-AC6A-F0487F3115B8',
         name: '副業のやつ ( RoR )',
+        color: '#c2e0c6',
         rdbms: 'MySQL',
         user: 'admin',
         password: 'admin-pw',

@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 interface Props {
   project: Project
   update: (project: Project) => void
+  testConnection: (project: Project) => void
 }
 
 export const ProjectUpdate: FC<Props> = (props) => {
@@ -28,7 +29,7 @@ export const ProjectUpdate: FC<Props> = (props) => {
         locals={<></>}
       />
       <div className={styles.component}>
-        <ProjectInput project={props.project} save={props.update} />
+        <ProjectInput project={props.project} save={props.update} testConnection={props.testConnection} />
       </div>
     </div>
   )

@@ -6,19 +6,20 @@
 
 .primary {
   @include base;
-  background-color: white;
-  border: solid 2px #4488ff;
-  color: #4488ff;
+  background-color: #08f;
+  border: none;
+  color: white;
 }
 
 .primary:hover {
+  background-color: #06f;
 }
 
 .secondary {
   @include base;
   background-color: white;
   border: solid 2px #d3d3d3;
-  color: black;
+  color: #5a5a5a;
 }
 
 .secondary:hover {

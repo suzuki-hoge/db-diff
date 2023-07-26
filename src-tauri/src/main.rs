@@ -14,6 +14,7 @@ fn main() -> anyhow::Result<()> {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             command::project::all_projects_command,
+            command::project::test_connection_project_command,
             command::project::insert_project_command,
             command::project::update_project_command,
             command::project::delete_project_command,

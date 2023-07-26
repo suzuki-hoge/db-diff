@@ -13,7 +13,10 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Create: Story = {
-  args: {},
+  args: {
+    save: console.log,
+    testConnection: console.log,
+  },
 }
 
 export const Update: Story = {
@@ -21,6 +24,7 @@ export const Update: Story = {
     project: {
       projectId: '92B07638-8EBA-471D-BDC1-71685B21EFE4',
       name: 'My Laravel Project',
+      color: '#c2e0c6',
       rdbms: 'PostgreSQL',
       user: 'admin',
       password: 'admin-pw',
@@ -28,5 +32,7 @@ export const Update: Story = {
       port: '3306',
       schema: 'my-laravel-project',
     },
+    save: console.log,
+    testConnection: console.log,
   },
 }

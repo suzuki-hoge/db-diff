@@ -13,7 +13,9 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Create: Story = {
-  args: {},
+  args: {
+    dump: console.log,
+  },
 }
 
 export const Update: Story = {
@@ -23,5 +25,6 @@ export const Update: Story = {
       snapshotName: '初期状態',
       createAt: '2023/01/01 12:34:56',
     },
+    update: console.log,
   },
 }

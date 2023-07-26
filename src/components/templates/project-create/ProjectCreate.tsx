@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 
 interface Props {
   insert: (project: Project) => void
+  testConnection: (project: Project) => void
 }
 
 export const ProjectCreate: FC<Props> = (props) => {
@@ -27,7 +28,7 @@ export const ProjectCreate: FC<Props> = (props) => {
         locals={<></>}
       />
       <div className={styles.component}>
-        <ProjectInput save={props.insert} />
+        <ProjectInput save={props.insert} testConnection={props.testConnection} />
       </div>
     </div>
   )

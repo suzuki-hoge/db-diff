@@ -19,6 +19,7 @@ export const Component: Story = {
     project: {
       projectId: '92B07638-8EBA-471D-BDC1-71685B21EFE4',
       name: 'My Laravel Project',
+      color: '#c2e0c6',
       rdbms: 'MySQL',
       user: 'admin',
       password: 'admin-pw',

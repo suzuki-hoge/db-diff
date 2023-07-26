@@ -9,6 +9,7 @@ import { LabeledRadioText } from '../../molecules/labeled-radio-text/LabeledRadi
 interface Props {
   project?: Project
   save: (project: Project) => void
+  testConnection: (project: Project) => void
 }
 
 export const ProjectInput: FC<Props> = (props) => {
@@ -37,28 +38,45 @@ export const ProjectInput: FC<Props> = (props) => {
         <LabeledInputText value={port} label={'Port'} length={5} onChange={setPort} />
       </div>
 
-      <LabeledInputText value={schema} label={'Database'} length={15} onChange={setSchema} />
+      <LabeledInputText value={schema} label={'Database'} length={30} onChange={setSchema} />
 
-      <p>Todo: URL + Test Button</p>
-
-      <Button
-        variant={'primary'}
-        label={'Save'}
-        onClick={() => {
-          const projectId = props.project?.projectId ?? createProjectId()
-          props.save({
-            projectId,
-            name,
-            color,
-            rdbms: 'MySQL',
-            user,
-            password,
-            host,
-            port,
-            schema,
-          })
-        }}
-      />
+      <div className={styles.cols}>
+        <Button
+          variant={'primary'}
+          label={'Save'}
+          onClick={() => {
+            const projectId = props.project?.projectId ?? createProjectId()
+            props.save({
+              projectId,
+              name,
+              color,
+              rdbms: 'MySQL',
+              user,
+              password,
+              host,
+              port,
+              schema,
+            })
+          }}
+        />
+        <Button
+          variant={'secondary'}
+          label={'Test Connection'}
+          onClick={() => {
+            props.testConnection({
+              projectId: '',
+              name,
+              color,
+              rdbms: 'MySQL',
+              user,
+              password,
+              host,
+              port,
+              schema,
+            })
+          }}
+        />
+      </div>
     </div>
   )
 }

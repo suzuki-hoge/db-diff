@@ -80,6 +80,16 @@ pub fn select_project_command(app_state: State<'_, AppState>, project_id: Projec
 }
 
 #[tauri::command]
+pub fn test_connection_project_command(project_json: ProjectJson) -> Result<String, String> {
+    let project = project_json.into();
+
+    match &project.create_connection() {
+        Ok(_) => Ok(project.create_url()),
+        Err(_e) => Err(project.create_url()),
+    }
+}
+
+#[tauri::command]
 pub fn insert_project_command(app_state: State<'_, AppState>, project_json: ProjectJson) -> Result<(), String> {
     let conn = app_state.conn.lock().unwrap();
 

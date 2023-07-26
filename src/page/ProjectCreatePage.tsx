@@ -9,7 +9,7 @@ export const ProjectCreatePage: FC = () => {
   const navigate = useNavigate()
 
   const insert: (project: Project) => void = (project) => {
-    console.log(project)
+    toast.dismiss()
     invoke('insert_project_command', { projectJson: project })
       .then(() => {
         toast.success('保存しました')
@@ -20,5 +20,16 @@ export const ProjectCreatePage: FC = () => {
       })
   }
 
-  return <ProjectCreate insert={insert} />
+  const testConnection: (project: Project) => void = (project) => {
+    toast.dismiss()
+    invoke<string>('test_connection_project_command', { projectJson: project })
+      .then((data) => {
+        toast.success(data, { duration: 4000, style: { minWidth: 900 } })
+      })
+      .catch((e: string) => {
+        toast.error(e)
+      })
+  }
+
+  return <ProjectCreate insert={insert} testConnection={testConnection} />
 }

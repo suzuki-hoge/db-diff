@@ -12,6 +12,7 @@ export const ProjectUpdatePage: FC = () => {
   const project = location.state as Project
 
   const update: (project: Project) => void = (project) => {
+    toast.dismiss()
     invoke('update_project_command', { projectJson: project })
       .then(() => {
         toast.success('保存しました')
@@ -22,5 +23,16 @@ export const ProjectUpdatePage: FC = () => {
       })
   }
 
-  return project !== undefined ? <ProjectUpdate project={project} update={update} /> : <></>
+  const testConnection: (project: Project) => void = (project) => {
+    toast.dismiss()
+    invoke<string>('test_connection_project_command', { projectJson: project })
+      .then((data) => {
+        toast.success(data, { duration: 4000, style: { maxWidth: 600 } })
+      })
+      .catch((e: string) => {
+        toast.error(e, { duration: 8000, style: { maxWidth: 600 } })
+      })
+  }
+
+  return project !== undefined ? <ProjectUpdate project={project} update={update} testConnection={testConnection} /> : <></>
 }

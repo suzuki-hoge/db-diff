@@ -45,10 +45,14 @@ impl Project {
     }
 
     pub fn create_connection(&self) -> anyhow::Result<Conn> {
-        let url = format!("mysql://{}:{}@{}:{}/{}", self.user, self.password, self.host, self.port, self.schema);
+        let url = self.create_url();
         let opt = Opts::from_url(&url).unwrap();
         let builder = OptsBuilder::from_opts(opt);
         let manager = MysqlConnectionManager::new(builder);
         manager.connect().map_err(|e| anyhow!(e))
+    }
+
+    pub fn create_url(&self) -> String {
+        format!("mysql://{}:{}@{}:{}/{}", self.user, self.password, self.host, self.port, self.schema)
     }
 }
