@@ -24,21 +24,21 @@ export const ProjectInput: FC<Props> = (props) => {
 
   return (
     <div className={styles.component}>
-      <LabeledColorTagInput label={'Name'} value={name} length={30} onChange={setName} color={color} setColor={setColor} />
+      <LabeledColorTagInput label={'Name'} value={name} maxLength={30} width={641} onChange={setName} color={color} setColor={setColor} />
 
       <LabeledRadioText label={'System'} value={rdbms} values={['MySQL', 'PostgreSQL']} name={'rdbms'} onChange={setRdbms} />
 
       <div className={styles.cols}>
-        <LabeledInputText value={user} label={'User'} length={15} onChange={setUser} />
-        <LabeledInputText value={password} label={'Password'} length={15} onChange={setPassword} />
+        <LabeledInputText value={user} label={'User'} maxLength={256} width={320} onChange={setUser} chars={'half'} />
+        <LabeledInputText value={password} label={'Password'} maxLength={256} width={320} onChange={setPassword} chars={'half'} />
       </div>
 
       <div className={styles.cols}>
-        <LabeledInputText value={host} label={'Host'} length={25} onChange={setHost} />
-        <LabeledInputText value={port} label={'Port'} length={5} onChange={setPort} />
+        <LabeledInputText value={host} label={'Host'} maxLength={256} width={560} onChange={setHost} chars={'half'} />
+        <LabeledInputText value={port} label={'Port'} maxLength={6} width={80} onChange={setPort} chars={'number'} />
       </div>
 
-      <LabeledInputText value={schema} label={'Database'} length={30} onChange={setSchema} />
+      <LabeledInputText value={schema} label={'Database'} maxLength={256} width={673} onChange={setSchema} chars={'half'} />
 
       <div className={styles.cols}>
         <Button

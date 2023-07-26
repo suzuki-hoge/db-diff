@@ -15,6 +15,7 @@ type Story = StoryObj<typeof meta>
 export const Component: Story = {
   args: {
     label: 'Schema Name',
-    length: 20,
+    maxLength: 20,
+    chars: 'all',
   },
 }

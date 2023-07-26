@@ -3,9 +3,13 @@ import styles from './InputText.module.scss'
 
 interface Props {
   value?: string
-  length: number
+  maxLength: number
+  width: number
   onChange: (value: string) => void
+  chars: 'all' | 'half' | 'number'
 }
+
+const regex = { all: /.*/g, half: /^[!-~]*$/g, number: /^[0-9]*$/g }
 
 export const InputText: FC<Props> = (props) => {
   return (
@@ -13,10 +17,13 @@ export const InputText: FC<Props> = (props) => {
       className={styles.component}
       type="text"
       value={props.value}
-      maxLength={props.length}
-      style={{ width: `${props.length * 1.3}rem` }}
+      maxLength={props.maxLength}
+      style={{ width: props.width }}
       onChange={(e) => {
-        props.onChange(e.target.value)
+        const value = e.target.value
+        if (value.match(regex[props.chars]) != null) {
+          props.onChange(value)
+        }
       }}
     />
   )

@@ -14,21 +14,26 @@ type Story = StoryObj<typeof meta>
 
 export const Empty: Story = {
   args: {
-    value: '',
-    length: 10,
+    maxLength: 10,
+    onChange: console.log,
+    chars: 'all',
   },
 }
 
 export const HalfWithMax: Story = {
   args: {
     value: '0123456789',
-    length: 10,
+    maxLength: 10,
+    onChange: console.log,
+    chars: 'all',
   },
 }
 
 export const FullWithMax: Story = {
   args: {
     value: 'あいうえおかきくけこ',
-    length: 10,
+    maxLength: 10,
+    onChange: console.log,
+    chars: 'all',
   },
 }

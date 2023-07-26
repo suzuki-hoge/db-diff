@@ -46,7 +46,7 @@ impl Project {
 
     pub fn create_connection(&self) -> anyhow::Result<Conn> {
         let url = self.create_url();
-        let opt = Opts::from_url(&url).unwrap();
+        let opt = Opts::from_url(&url).map_err(|e| anyhow!(e))?;
         let builder = OptsBuilder::from_opts(opt);
         let manager = MysqlConnectionManager::new(builder);
         manager.connect().map_err(|e| anyhow!(e))
