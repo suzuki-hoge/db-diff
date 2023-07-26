@@ -113,7 +113,7 @@ mod tests {
 
         let project_id = create_project_id();
 
-        let project = Project::new(&project_id, "test-project", Mysql, "user", "password", "127.0.0.1", "3306", "test-db");
+        let project = Project::new(&project_id, "test-project", "red", Mysql, "user", "password", "127.0.0.1", "3306", "test-db");
         insert_project(&conn, &project)?;
 
         // all
@@ -164,7 +164,7 @@ mod tests {
 
         let project_id = create_project_id();
 
-        let project = Project::new(&project_id, "test-project", Mysql, "user", "password", "127.0.0.1", "3306", "test-db");
+        let project = Project::new(&project_id, "test-project", "red", Mysql, "user", "password", "127.0.0.1", "3306", "test-db");
         insert_project(&conn, &project)?;
 
         let snapshot_id = create_snapshot_id();

@@ -12,22 +12,23 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Small: Story = {
+export const Empty: Story = {
   args: {
-    value: 'foo',
+    value: '',
     length: 10,
   },
 }
 
-export const Medium: Story = {
+export const HalfWithMax: Story = {
   args: {
-    length: 20,
+    value: '0123456789',
+    length: 10,
   },
 }
 
-export const Large: Story = {
+export const FullWithMax: Story = {
   args: {
-    value: 'bar',
-    length: 40,
+    value: 'あいうえおかきくけこ',
+    length: 10,
   },
 }

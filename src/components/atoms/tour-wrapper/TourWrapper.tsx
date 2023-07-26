@@ -14,7 +14,7 @@ export const TourWrapper: FC<Props> = (props) => {
       isOpen={props.isTouring}
       onRequestClose={props.onClose}
       startAt={0}
-      accentColor={'#ef5a3d'}
+      accentColor={'#4488ff'}
       rounded={8}
       showNumber={false}
       showCloseButton={false}

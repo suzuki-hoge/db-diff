@@ -58,7 +58,7 @@ export const ProjectList: FC<Props> = (props) => {
             <div key={i} className={styles.item}>
               <ColorTagCard
                 label={project.name}
-                variant="green"
+                color={project.color}
                 onClick={() => {
                   props.select(project.projectId)
                 }}

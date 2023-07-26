@@ -5,6 +5,7 @@ export const createProjectId: () => string = () => v4()
 export interface Project {
   projectId: string
   name: string
+  color: string
   rdbms: string
   user: string
   password: string

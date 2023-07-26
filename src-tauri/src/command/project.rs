@@ -11,8 +11,9 @@ use crate::domain::project::{Project, ProjectId};
 #[serde(rename_all = "camelCase")]
 pub struct ProjectJson {
     pub project_id: ProjectId,
-    pub rdbms: String,
     pub name: String,
+    pub color: String,
+    pub rdbms: String,
     pub user: String,
     pub password: String,
     pub host: String,
@@ -25,6 +26,7 @@ impl ProjectJson {
         Self {
             project_id: project.project_id,
             name: project.name,
+            color: project.color,
             rdbms: match project.rdbms {
                 Mysql => "MySQL".to_string(),
             },
@@ -40,6 +42,7 @@ impl ProjectJson {
         Project::new(
             &self.project_id,
             &self.name,
+            &self.color,
             match self.rdbms.as_ref() {
                 "MySQL" => Mysql,
                 _ => unreachable!(),

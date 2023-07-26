@@ -1,31 +1,6 @@
-@mixin base {
+.component {
   display: inline-block;
   height: 1rem;
   width: 1rem;
   border-radius: 50%;
-}
-
-.red {
-  @include base;
-  background-color: var(--color-tag-red);
-}
-
-.yellow {
-  @include base;
-  background-color: var(--color-tag-yellow);
-}
-
-.green {
-  @include base;
-  background-color: var(--color-tag-green);
-}
-
-.blue {
-  @include base;
-  background-color: var(--color-tag-blue);
-}
-
-.purple {
-  @include base;
-  background-color: var(--color-tag-purple);
 }

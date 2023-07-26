@@ -1,0 +1,62 @@
+.component {
+  display: flex;
+  flex-direction: column;
+
+  .input {
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    border: solid 2px var(--color-frame);
+    border-radius: var(--radius-input);
+
+    span {
+      cursor: pointer;
+    }
+  }
+  .active {
+    border: solid 2px var(--color-frame-focus);
+  }
+
+  .text {
+    padding: 0.3rem 0.5rem;
+    font-size: 1.3rem;
+    border: none;
+    outline: none;
+  }
+
+  .picker {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    row-gap: 0.5rem;
+    column-gap: 0.5rem;
+    border: solid 2px var(--color-frame);
+    border-radius: var(--radius-input);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    background-color: white;
+    z-index: 2;
+  }
+
+  .picker:before {
+    content: '';
+    position: absolute;
+    top: -13px;
+    left: 10px;
+    border: 6px solid transparent;
+    border-bottom: 10px solid white;
+    z-index: 2;
+  }
+
+  .picker:after {
+    content: '';
+    position: absolute;
+    top: -16px;
+    left: 10px;
+    border: 6px solid transparent;
+    border-bottom: 10px solid var(--color-frame);
+    z-index: 1;
+  }
+}

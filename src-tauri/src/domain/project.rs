@@ -19,6 +19,7 @@ pub enum Rdbms {
 pub struct Project {
     pub project_id: ProjectId,
     pub name: String,
+    pub color: String,
     pub rdbms: Rdbms,
     pub user: String,
     pub password: String,
@@ -29,10 +30,11 @@ pub struct Project {
 
 impl Project {
     #[allow(clippy::too_many_arguments)]
-    pub fn new<S: Into<String>>(project_id: &ProjectId, name: S, rdbms: Rdbms, user: S, password: S, host: S, port: S, schema: S) -> Self {
+    pub fn new<S: Into<String>>(project_id: &ProjectId, name: S, color: S, rdbms: Rdbms, user: S, password: S, host: S, port: S, schema: S) -> Self {
         Self {
             project_id: project_id.clone(),
             name: name.into(),
+            color: color.into(),
             rdbms,
             user: user.into(),
             password: password.into(),

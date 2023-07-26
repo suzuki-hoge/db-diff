@@ -4,6 +4,7 @@ diesel::table! {
     projects (project_id) {
         project_id -> Text,
         name -> Text,
+        color -> Text,
         rdbms -> Text,
         user -> Text,
         password -> Text,

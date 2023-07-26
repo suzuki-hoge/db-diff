@@ -1,8 +1,8 @@
 import React, { type FC, useState } from 'react'
 import styles from './SnapshotInput.module.scss'
 import { type SnapshotSummary } from '../../../types'
-import { InputText } from '../../atoms/input-text/InputText'
 import { Button } from '../../atoms/button/Button'
+import { LabeledInputText } from '../../molecules/labeled-input-text/LabeledInputText'
 
 interface Props {
   snapshotSummary?: SnapshotSummary
@@ -15,16 +15,7 @@ export const SnapshotInput: FC<Props> = (props) => {
 
   return (
     <div className={styles.component}>
-      <div className={styles.item}>
-        <span>Name</span>
-        <InputText
-          value={snapshotName}
-          length={20}
-          onInput={(e) => {
-            setSnapshotName(e.target.value)
-          }}
-        />
-      </div>
+      <LabeledInputText label={'Name'} value={snapshotName} length={20} onChange={setSnapshotName} />
       <Button
         variant={'primary'}
         label={'Save'}

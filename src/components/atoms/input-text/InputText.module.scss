@@ -4,3 +4,8 @@
   padding: 0.3rem 0.5rem;
   font-size: 1.3rem;
 }
+
+.component:focus {
+  outline: none;
+  border: solid 2px var(--color-frame-focus);
+}

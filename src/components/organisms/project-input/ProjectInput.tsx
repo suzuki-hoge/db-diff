@@ -1,8 +1,10 @@
 import React, { type FC, useState } from 'react'
 import styles from './ProjectInput.module.scss'
 import { createProjectId, type Project } from '../../../types'
-import { InputText } from '../../atoms/input-text/InputText'
 import { Button } from '../../atoms/button/Button'
+import { LabeledColorTagInput } from '../../molecules/labeled-color-tag-input/LabeledColorTagInput'
+import { LabeledInputText } from '../../molecules/labeled-input-text/LabeledInputText'
+import { LabeledRadioText } from '../../molecules/labeled-radio-text/LabeledRadioText'
 
 interface Props {
   project?: Project
@@ -11,6 +13,8 @@ interface Props {
 
 export const ProjectInput: FC<Props> = (props) => {
   const [name, setName] = useState(props.project?.name ?? '')
+  const [color, setColor] = useState(props.project?.color ?? '#c2e0c6')
+  const [rdbms, setRdbms] = useState(props.project?.rdbms ?? 'MySQL')
   const [user, setUser] = useState(props.project?.user ?? '')
   const [password, setPassword] = useState(props.project?.password ?? '')
   const [host, setHost] = useState(props.project?.host ?? '')
@@ -19,79 +23,24 @@ export const ProjectInput: FC<Props> = (props) => {
 
   return (
     <div className={styles.component}>
-      <div className={styles.item}>
-        <span>Name</span>
-        <InputText
-          value={name}
-          length={33}
-          onInput={(e) => {
-            setName(e.target.value)
-          }}
-        />
+      <LabeledColorTagInput label={'Name'} value={name} length={30} onChange={setName} color={color} setColor={setColor} />
+
+      <LabeledRadioText label={'System'} value={rdbms} values={['MySQL', 'PostgreSQL']} name={'rdbms'} onChange={setRdbms} />
+
+      <div className={styles.cols}>
+        <LabeledInputText value={user} label={'User'} length={15} onChange={setUser} />
+        <LabeledInputText value={password} label={'Password'} length={15} onChange={setPassword} />
       </div>
-      <div className={styles.item}>
-        <span>RDBMS</span>
-        <InputText value="MySQL" length={5} onInput={(_) => {}} />
+
+      <div className={styles.cols}>
+        <LabeledInputText value={host} label={'Host'} length={25} onChange={setHost} />
+        <LabeledInputText value={port} label={'Port'} length={5} onChange={setPort} />
       </div>
-      <div className={styles.item}>
-        <div className={styles.cols}>
-          <div className={styles.item}>
-            <span>Username</span>
-            <InputText
-              value={user}
-              length={15}
-              onInput={(e) => {
-                setUser(e.target.value)
-              }}
-            />
-          </div>
-          <div className={styles.item}>
-            <span>Password</span>
-            <InputText
-              value={password}
-              length={15}
-              onInput={(e) => {
-                setPassword(e.target.value)
-              }}
-            />
-          </div>
-        </div>
-      </div>
-      <div className={styles.item}>
-        <div className={styles.cols}>
-          <div className={styles.item}>
-            <span>Host</span>
-            <InputText
-              value={host}
-              length={25}
-              onInput={(e) => {
-                setHost(e.target.value)
-              }}
-            />
-          </div>
-          <div className={styles.item}>
-            <span>Port</span>
-            <InputText
-              value={port}
-              length={5}
-              onInput={(e) => {
-                setPort(e.target.value)
-              }}
-            />
-          </div>
-        </div>
-      </div>
-      <div className={styles.item}>
-        <span>Database</span>
-        <InputText
-          value={schema}
-          length={20}
-          onInput={(e) => {
-            setSchema(e.target.value)
-          }}
-        />
-      </div>
+
+      <LabeledInputText value={schema} label={'Database'} length={15} onChange={setSchema} />
+
       <p>Todo: URL + Test Button</p>
+
       <Button
         variant={'primary'}
         label={'Save'}
@@ -100,6 +49,7 @@ export const ProjectInput: FC<Props> = (props) => {
           props.save({
             projectId,
             name,
+            color,
             rdbms: 'MySQL',
             user,
             password,

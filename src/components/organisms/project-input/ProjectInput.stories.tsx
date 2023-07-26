@@ -19,9 +19,9 @@ export const Create: Story = {
 export const Update: Story = {
   args: {
     project: {
-      id: '92B07638-8EBA-471D-BDC1-71685B21EFE4',
+      projectId: '92B07638-8EBA-471D-BDC1-71685B21EFE4',
       name: 'My Laravel Project',
-      rdbms: 'MySQL',
+      rdbms: 'PostgreSQL',
       user: 'admin',
       password: 'admin-pw',
       host: 'localhost',

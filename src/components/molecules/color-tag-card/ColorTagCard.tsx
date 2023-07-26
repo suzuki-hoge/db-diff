@@ -4,14 +4,14 @@ import styles from './ColorTagCard.module.scss'
 
 interface Props {
   label: string
-  variant: 'red' | 'yellow' | 'green' | 'blue' | 'purple'
+  color: string
   onClick: () => void
 }
 
 export const ColorTagCard: FC<Props> = (props) => {
   return (
     <div className={['color_tag_card', styles.component].join(' ')} onClick={props.onClick}>
-      <ColorTag variant={props.variant} />
+      <ColorTag color={props.color} />
       <span>{props.label}</span>
     </div>
   )

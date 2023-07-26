@@ -12,6 +12,7 @@ use schema::projects as projects_table;
 struct ProjectRecord {
     project_id: ProjectId,
     name: String,
+    color: String,
     rdbms: String,
     user: String,
     password: String,
@@ -25,6 +26,7 @@ impl ProjectRecord {
         Self {
             project_id: project.project_id.clone(),
             name: project.name.clone(),
+            color: project.color.clone(),
             rdbms: match project.rdbms {
                 Mysql => "MySQL",
             }
@@ -41,6 +43,7 @@ impl ProjectRecord {
         Project {
             project_id: self.project_id,
             name: self.name,
+            color: self.color,
             rdbms: match self.rdbms.as_ref() {
                 "MySQL" => Mysql,
                 _ => unreachable!(),
@@ -111,7 +114,7 @@ mod tests {
         let project_id = create_snapshot_id();
 
         // insert
-        let project1 = Project::new(&project_id, "test-project", Mysql, "user", "password", "127.0.0.1", "3306", "test-db");
+        let project1 = Project::new(&project_id, "test-project", "red", Mysql, "user", "password", "127.0.0.1", "3306", "test-db");
         insert_project(&conn, &project1)?;
 
         let projects = all_projects(&conn)?;
@@ -119,7 +122,7 @@ mod tests {
         assert_eq!(&project1, &projects[0]);
 
         // update
-        let project2 = Project::new(&project_id, "test-project-2", Mysql, "user2", "password2", "127.0.0.2", "3307", "test-db2");
+        let project2 = Project::new(&project_id, "test-project-2", "red", Mysql, "user2", "password2", "127.0.0.2", "3307", "test-db2");
         update_project(&conn, &project2)?;
 
         let projects = all_projects(&conn)?;

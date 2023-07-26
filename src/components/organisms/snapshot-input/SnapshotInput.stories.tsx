@@ -19,8 +19,8 @@ export const Create: Story = {
 export const Update: Story = {
   args: {
     snapshotSummary: {
-      id: 'CC181CDB-07BC-4747-AABC-653CEF526D77',
-      name: '初期状態',
+      snapshotId: 'CC181CDB-07BC-4747-AABC-653CEF526D77',
+      snapshotName: '初期状態',
       createAt: '2023/01/01 12:34:56',
     },
   },

@@ -4,6 +4,7 @@ create table projects
 (
     project_id text not null,
     name       text not null,
+    color      text not null,
     rdbms      text not null,
     user       text not null,
     password   text not null,
