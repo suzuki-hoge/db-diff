@@ -15,7 +15,7 @@ export const SnapshotInput: FC<Props> = (props) => {
 
   return (
     <div className={styles.component}>
-      <LabeledInputText label={'Name'} value={snapshotName} maxLength={20} onChange={setSnapshotName} />
+      <LabeledInputText label={'Name'} value={snapshotName} maxLength={30} width={673} onChange={setSnapshotName} chars={'all'} />
       <Button
         variant={'primary'}
         label={'Save'}

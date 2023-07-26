@@ -8,9 +8,13 @@ export const SnapshotCreatePage: FC = () => {
   const navigate = useNavigate()
 
   const dump: (snapshotName: string) => void = (snapshotName) => {
-    invoke('dump_snapshot_command', { snapshotName })
+    toast
+      .promise(
+        invoke('dump_snapshot_command', { snapshotName }),
+        { loading: 'スナップショットを作成中...', success: '保存しました', error: 'エラーが発生しました' },
+        { style: { minWidth: '200px' } }
+      )
       .then(() => {
-        toast.success('スナップショットを作成しました')
         navigate('/snapshot-summary/list')
       })
       .catch((e: string) => {
