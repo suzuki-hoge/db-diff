@@ -9,3 +9,11 @@
 ```
 $ sips -p 307 307 round.png -o tmp.png && sips -Z 256 tmp.png -o icon.png && rm tmp.png
 ```
+
+## Generating
+
+- https://tauri.app/v1/guides/features/icons/
+
+```
+$ yarn tauri icon src-tauri/icon-images/icon.png
+```
