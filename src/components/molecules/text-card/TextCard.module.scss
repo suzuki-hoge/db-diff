@@ -1,7 +1,7 @@
 .component {
   border-radius: var(--radius-flame);
   border: solid 1px var(--color-frame);
-  padding: 0.5rem 1rem 0.5rem 1rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -17,5 +17,6 @@
 }
 
 .selected {
-  background-color: lighten(lightgrey, 10%);
+  border: solid 3px var(--color-frame-focus);
+  padding: calc(0.5rem - 2px) calc(1rem - 2px);
 }

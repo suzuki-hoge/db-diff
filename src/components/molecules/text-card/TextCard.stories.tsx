@@ -12,34 +12,18 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const First: Story = {
+export const Selected: Story = {
   args: {
     label: '初期状態',
     text: '2023/01/01 12:34:56',
-    disabled: false,
+    selected: true,
   },
 }
 
-export const Second: Story = {
+export const Unselected: Story = {
   args: {
     label: 'サインアップ ( Google アカウント連携 )',
     text: '2023/01/01 12:34:56',
-    disabled: true,
-  },
-}
-
-export const Third: Story = {
-  args: {
-    label: '退会予約',
-    text: '2023/01/01 12:34:56',
-    disabled: false,
-  },
-}
-
-export const Fourth: Story = {
-  args: {
-    label: '退会確定',
-    text: '2023/01/01 12:34:56',
-    disabled: false,
+    selected: false,
   },
 }
