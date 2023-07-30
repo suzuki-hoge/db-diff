@@ -24,23 +24,29 @@ export const ProjectInput: FC<Props> = (props) => {
 
   return (
     <div className={styles.component}>
-      <LabeledColorTagInput label={'Name'} value={name} maxLength={30} width={641} onChange={setName} color={color} setColor={setColor} />
+      <div className={styles.grid}>
+        <LabeledColorTagInput label={'Name'} value={name} maxLength={30} onChange={setName} color={color} setColor={setColor} />
+      </div>
 
       <LabeledRadioText label={'System'} value={rdbms} values={['MySQL', 'PostgreSQL']} name={'rdbms'} onChange={setRdbms} />
 
-      <div className={styles.cols}>
-        <LabeledInputText value={user} label={'User'} maxLength={256} width={320} onChange={setUser} chars={'half'} />
-        <LabeledInputText value={password} label={'Password'} maxLength={256} width={320} onChange={setPassword} chars={'half'} />
+      <div className={styles.grid} style={{ gridTemplateColumns: '1fr 1rem 1fr' }}>
+        <LabeledInputText value={user} label={'User'} maxLength={256} onChange={setUser} chars={'half'} />
+        <div></div>
+        <LabeledInputText value={password} label={'Password'} maxLength={256} onChange={setPassword} chars={'half'} />
       </div>
 
-      <div className={styles.cols}>
-        <LabeledInputText value={host} label={'Host'} maxLength={256} width={560} onChange={setHost} chars={'half'} />
-        <LabeledInputText value={port} label={'Port'} maxLength={6} width={80} onChange={setPort} chars={'number'} />
+      <div className={styles.grid} style={{ gridTemplateColumns: '1fr 1rem 100px' }}>
+        <LabeledInputText value={host} label={'Host'} maxLength={256} onChange={setHost} chars={'half'} />
+        <div></div>
+        <LabeledInputText value={port} label={'Port'} maxLength={6} onChange={setPort} chars={'number'} />
       </div>
 
-      <LabeledInputText value={schema} label={'Database'} maxLength={256} width={673} onChange={setSchema} chars={'half'} />
+      <div className={styles.grid}>
+        <LabeledInputText value={schema} label={'Database'} maxLength={256} onChange={setSchema} chars={'half'} />
+      </div>
 
-      <div className={styles.cols}>
+      <div className={styles.buttons}>
         <Button
           variant={'primary'}
           label={'Save'}

@@ -4,7 +4,6 @@ import styles from './InputText.module.scss'
 interface Props {
   value?: string
   maxLength: number
-  width: number
   onChange: (value: string) => void
   chars: 'all' | 'half' | 'number'
 }
@@ -18,7 +17,6 @@ export const InputText: FC<Props> = (props) => {
       type="text"
       value={props.value}
       maxLength={props.maxLength}
-      style={{ width: props.width }}
       onChange={(e) => {
         const value = e.target.value
         if (value.match(regex[props.chars]) != null) {

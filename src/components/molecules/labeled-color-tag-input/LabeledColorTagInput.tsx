@@ -7,7 +7,6 @@ interface Props {
   label: string
   value: string
   maxLength: number
-  width: number
   onChange: (value: string) => void
   color: string
   setColor: (color: string) => void
@@ -32,7 +31,6 @@ export const LabeledColorTagInput: FC<Props> = (props) => {
           type="text"
           value={props.value}
           maxLength={props.maxLength}
-          style={{ width: props.width }}
           onChange={(e) => {
             props.onChange(e.target.value)
           }}

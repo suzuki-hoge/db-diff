@@ -16,7 +16,7 @@ export const Component: Story = {
   args: {
     label: 'name',
     value: 'lorem ipsum',
-    length: 20,
+    maxLength: 20,
     onChange: console.log,
     color: 'green',
     setColor: console.log,

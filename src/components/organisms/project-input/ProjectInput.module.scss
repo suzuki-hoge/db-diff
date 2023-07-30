@@ -3,10 +3,16 @@
   flex-direction: column;
   align-items: flex-start;
   row-gap: 1rem;
+  width: 700px;
 
-  .cols {
+  .grid {
+    display: grid;
+    width: 100%;
+  }
+
+  .buttons {
     display: flex;
     flex-direction: row;
-    column-gap: 0.8rem;
+    column-gap: 1rem;
   }
 }
