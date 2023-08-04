@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: flex-start;
   row-gap: 0.5rem;
+  overflow-x: visible;
 }
 
 .label {
@@ -19,14 +20,16 @@ table {
   border: solid 1px var(--color-frame);
   border-radius: var(--radius-flame);
   text-align: center;
-  vertical-align: center;
+  table-layout: fixed;
 
   tr {
     height: 2rem;
 
     th {
       border-right: solid 1px var(--color-frame);
-      padding: 0 1em;
+      padding: 0 16px;
+      position: relative;
+      white-space: nowrap;
     }
 
     th:last-child {
@@ -36,8 +39,12 @@ table {
     td {
       border-right: solid 1px var(--color-frame);
       border-top: solid 1px var(--color-frame);
-      padding: 0 1em;
+      padding: 0 16px;
       height: 2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 0;
     }
 
     td:last-child {
@@ -73,4 +80,18 @@ table {
 
 .none {
   background-color: var(--color-diff-none);
+}
+
+.resizer {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 3px;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.resizer:hover,
+.resizing {
+  background-color: blue;
 }
