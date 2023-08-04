@@ -10,6 +10,7 @@ interface Props {
   onChange: (value: string) => void
   color: string
   setColor: (color: string) => void
+  autoFocus?: true
 }
 
 export const LabeledColorTagInput: FC<Props> = (props) => {
@@ -40,6 +41,7 @@ export const LabeledColorTagInput: FC<Props> = (props) => {
           onBlur={() => {
             setActive('')
           }}
+          autoFocus={props.autoFocus}
         />
       </div>
       {isPicking && (

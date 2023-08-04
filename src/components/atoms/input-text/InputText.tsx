@@ -6,6 +6,7 @@ interface Props {
   maxLength: number
   onChange: (value: string) => void
   chars: 'all' | 'half' | 'number'
+  autoFocus?: boolean
 }
 
 const regex = { all: /.*/g, half: /^[!-~]*$/g, number: /^[0-9]*$/g }
@@ -23,6 +24,7 @@ export const InputText: FC<Props> = (props) => {
           props.onChange(value)
         }
       }}
+      autoFocus={props.autoFocus}
     />
   )
 }

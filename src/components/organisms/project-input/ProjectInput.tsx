@@ -25,7 +25,7 @@ export const ProjectInput: FC<Props> = (props) => {
   return (
     <div className={styles.component}>
       <div className={styles.grid}>
-        <LabeledColorTagInput label={'Name'} value={name} maxLength={30} onChange={setName} color={color} setColor={setColor} />
+        <LabeledColorTagInput label={'Name'} value={name} maxLength={30} onChange={setName} color={color} setColor={setColor} autoFocus={true} />
       </div>
 
       <LabeledRadioText label={'System'} value={rdbms} values={['MySQL', 'PostgreSQL']} name={'rdbms'} onChange={setRdbms} />

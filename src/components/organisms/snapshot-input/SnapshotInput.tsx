@@ -16,7 +16,7 @@ export const SnapshotInput: FC<Props> = (props) => {
   return (
     <div className={styles.component}>
       <div className={styles.grid}>
-        <LabeledInputText label={'Name'} value={snapshotName} maxLength={30} onChange={setSnapshotName} chars={'all'} />
+        <LabeledInputText label={'Name'} value={snapshotName} maxLength={30} onChange={setSnapshotName} chars={'all'} autoFocus={true} />
       </div>
       <Button
         variant={'primary'}
