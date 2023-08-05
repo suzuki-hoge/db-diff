@@ -9,13 +9,19 @@ interface Props {
   onChange: (value: string) => void
   chars: 'all' | 'half' | 'number'
   autoFocus?: boolean
+  errors?: string[]
 }
 
 export const LabeledInputText: FC<Props> = (props) => {
   return (
     <div className={styles.component}>
       <span>{props.label}</span>
-      <InputText {...props} />
+      <InputText hasError={props.errors !== undefined} {...props} />
+      {(props.errors ?? []).map((error) => (
+        <p key={error} className={styles.error}>
+          {error}
+        </p>
+      ))}
     </div>
   )
 }

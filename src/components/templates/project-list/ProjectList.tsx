@@ -54,33 +54,35 @@ export const ProjectList: FC<Props> = (props) => {
           }
         />
         <div className={styles.component}>
-          {props.projects.map((project, i) => (
-            <div key={i} className={styles.item}>
-              <ColorTagCard
-                label={project.name}
-                color={project.color}
-                onClick={() => {
-                  props.select(project.projectId)
-                }}
-              />
-              {isSetting && (
-                <div className={styles.icons}>
-                  <IconEdit
-                    variant={'medium'}
-                    onClick={() => {
-                      navigate('/project/update', { state: project })
-                    }}
-                  />
-                  <IconDelete
-                    variant={'medium'}
-                    onClick={() => {
-                      props.remove(project.projectId)
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+          <div className={styles.content}>
+            {props.projects.map((project, i) => (
+              <div key={i} className={styles.item}>
+                <ColorTagCard
+                  label={project.name}
+                  color={project.color}
+                  onClick={() => {
+                    props.select(project.projectId)
+                  }}
+                />
+                {isSetting && (
+                  <div className={styles.icons}>
+                    <IconEdit
+                      variant={'medium'}
+                      onClick={() => {
+                        navigate('/project/update', { state: project })
+                      }}
+                    />
+                    <IconDelete
+                      variant={'medium'}
+                      onClick={() => {
+                        props.remove(project.projectId)
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
           {props.projects.length === 0 && (
             <div className={styles.empty}>
               <p>接続設定がありません</p>

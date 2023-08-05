@@ -11,6 +11,7 @@ interface Props {
   color: string
   setColor: (color: string) => void
   autoFocus?: true
+  errors?: string[]
 }
 
 export const LabeledColorTagInput: FC<Props> = (props) => {
@@ -20,7 +21,7 @@ export const LabeledColorTagInput: FC<Props> = (props) => {
   return (
     <div className={styles.component}>
       <span>{props.label}</span>
-      <div className={[styles.input, active].join(' ')}>
+      <div className={[styles.input, active, (props.errors ?? []).length !== 0 ? styles.error_div : ''].join(' ')}>
         <ColorTag
           color={props.color}
           onClick={() => {
@@ -57,6 +58,11 @@ export const LabeledColorTagInput: FC<Props> = (props) => {
           }}
         />
       )}
+      {(props.errors ?? []).map((error) => (
+        <p key={error} className={styles.error}>
+          {error}
+        </p>
+      ))}
     </div>
   )
 }

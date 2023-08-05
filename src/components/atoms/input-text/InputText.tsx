@@ -7,6 +7,7 @@ interface Props {
   onChange: (value: string) => void
   chars: 'all' | 'half' | 'number'
   autoFocus?: boolean
+  hasError?: boolean
 }
 
 const regex = { all: /.*/g, half: /^[!-~]*$/g, number: /^[0-9]*$/g }
@@ -14,7 +15,7 @@ const regex = { all: /.*/g, half: /^[!-~]*$/g, number: /^[0-9]*$/g }
 export const InputText: FC<Props> = (props) => {
   return (
     <input
-      className={styles.component}
+      className={[styles.component, props.hasError ?? false ? styles.error : ''].join(' ')}
       type="text"
       value={props.value}
       maxLength={props.maxLength}

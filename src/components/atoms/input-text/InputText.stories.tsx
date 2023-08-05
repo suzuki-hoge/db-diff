@@ -20,6 +20,15 @@ export const Empty: Story = {
   },
 }
 
+export const Error: Story = {
+  args: {
+    maxLength: 10,
+    onChange: console.log,
+    chars: 'all',
+    hasError: true,
+  },
+}
+
 export const HalfWithMax: Story = {
   args: {
     value: '0123456789',

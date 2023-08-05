@@ -11,6 +11,7 @@
     row-gap: 1rem;
     flex: 1;
     overflow-y: scroll;
+    align-items: center;
 
     .selected {
       display: flex;
@@ -42,6 +43,7 @@
       display: flex;
       flex-direction: column;
       row-gap: 1rem;
+      width: 700px;
 
       .item {
         display: flex;

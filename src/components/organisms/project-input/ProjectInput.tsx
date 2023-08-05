@@ -5,6 +5,7 @@ import { Button } from '../../atoms/button/Button'
 import { LabeledColorTagInput } from '../../molecules/labeled-color-tag-input/LabeledColorTagInput'
 import { LabeledInputText } from '../../molecules/labeled-input-text/LabeledInputText'
 import { LabeledRadioText } from '../../molecules/labeled-radio-text/LabeledRadioText'
+import { z } from 'zod'
 
 interface Props {
   project?: Project
@@ -22,28 +23,54 @@ export const ProjectInput: FC<Props> = (props) => {
   const [port, setPort] = useState(props.project?.port ?? '')
   const [schema, setSchema] = useState(props.project?.schema ?? '')
 
+  const v = z.object({
+    name: z.string().min(1, { message: '入力してください' }),
+    user: z.string().min(1, { message: '入力してください' }),
+    password: z.string().min(1, { message: '入力してください' }),
+    host: z.string().min(1, { message: '入力してください' }),
+    port: z.string().min(1, { message: '入力してください' }),
+    schema: z.string().min(1, { message: '入力してください' }),
+  })
+  const [errors, setErrors] = useState<{
+    name?: string[]
+    user?: string[]
+    password?: string[]
+    host?: string[]
+    port?: string[]
+    schema?: string[]
+  }>({})
+
   return (
     <div className={styles.component}>
       <div className={styles.grid}>
-        <LabeledColorTagInput label={'Name'} value={name} maxLength={30} onChange={setName} color={color} setColor={setColor} autoFocus={true} />
+        <LabeledColorTagInput
+          label={'Name'}
+          value={name}
+          maxLength={30}
+          onChange={setName}
+          color={color}
+          setColor={setColor}
+          autoFocus={true}
+          errors={errors.name}
+        />
       </div>
 
       <LabeledRadioText label={'System'} value={rdbms} values={['MySQL', 'PostgreSQL']} name={'rdbms'} onChange={setRdbms} />
 
       <div className={styles.grid} style={{ gridTemplateColumns: '1fr 1rem 1fr' }}>
-        <LabeledInputText value={user} label={'User'} maxLength={256} onChange={setUser} chars={'half'} />
+        <LabeledInputText value={user} label={'User'} maxLength={50} onChange={setUser} chars={'half'} errors={errors.user} />
         <div></div>
-        <LabeledInputText value={password} label={'Password'} maxLength={256} onChange={setPassword} chars={'half'} />
+        <LabeledInputText value={password} label={'Password'} maxLength={50} onChange={setPassword} chars={'half'} errors={errors.password} />
       </div>
 
-      <div className={styles.grid} style={{ gridTemplateColumns: '1fr 1rem 100px' }}>
-        <LabeledInputText value={host} label={'Host'} maxLength={256} onChange={setHost} chars={'half'} />
+      <div className={styles.grid} style={{ gridTemplateColumns: '1fr 1rem 130px' }}>
+        <LabeledInputText value={host} label={'Host'} maxLength={200} onChange={setHost} chars={'half'} errors={errors.host} />
         <div></div>
-        <LabeledInputText value={port} label={'Port'} maxLength={6} onChange={setPort} chars={'number'} />
+        <LabeledInputText value={port} label={'Port'} maxLength={6} onChange={setPort} chars={'number'} errors={errors.port} />
       </div>
 
       <div className={styles.grid}>
-        <LabeledInputText value={schema} label={'Database'} maxLength={256} onChange={setSchema} chars={'half'} />
+        <LabeledInputText value={schema} label={'Database'} maxLength={50} onChange={setSchema} chars={'half'} errors={errors.schema} />
       </div>
 
       <div className={styles.buttons}>
@@ -51,18 +78,26 @@ export const ProjectInput: FC<Props> = (props) => {
           variant={'primary'}
           label={'Save'}
           onClick={() => {
-            const projectId = props.project?.projectId ?? createProjectId()
-            props.save({
-              projectId,
-              name,
-              color,
-              rdbms: 'MySQL',
-              user,
-              password,
-              host,
-              port,
-              schema,
-            })
+            const r = v.safeParse({ name, user, password, host, port, schema })
+
+            if (!r.success) {
+              setErrors(r.error.flatten().fieldErrors)
+            } else {
+              setErrors({})
+
+              const projectId = props.project?.projectId ?? createProjectId()
+              props.save({
+                projectId,
+                name,
+                color,
+                rdbms: 'MySQL',
+                user,
+                password,
+                host,
+                port,
+                schema,
+              })
+            }
           }}
         />
         <Button

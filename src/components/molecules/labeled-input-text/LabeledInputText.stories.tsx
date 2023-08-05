@@ -19,3 +19,12 @@ export const Component: Story = {
     chars: 'all',
   },
 }
+
+export const Error: Story = {
+  args: {
+    label: 'Schema Name',
+    maxLength: 20,
+    chars: 'all',
+    errors: ['invalid format', 'invalid length'],
+  },
+}

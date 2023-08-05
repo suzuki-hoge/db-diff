@@ -22,6 +22,7 @@
     font-size: 1.3rem;
     border: none;
     outline: none;
+    width: 100%;
   }
 
   .picker {
@@ -59,4 +60,13 @@
     border-bottom: 10px solid var(--color-frame);
     z-index: 1;
   }
+}
+
+.error_div {
+  border: solid 2px var(--color-frame-error) !important;
+}
+
+.error {
+  color: red;
+  margin: 0;
 }
