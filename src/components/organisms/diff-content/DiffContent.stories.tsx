@@ -395,11 +395,11 @@ export const LargeDiff: Story = {
   args: {
     tableDiff: {
       tableName: 'users',
-      primaryValues: ['1', '23456'],
+      primaryValues: ['12345', '67890'],
       primaryColName: 'id',
       colNames: ['name-value', 'age', 'session', 'note', 'created', 'updated'],
       rowDiffs1: {
-        '1': {
+        '12345': {
           'name-value': { status: 'stay', value: '"John"' },
           age: { status: 'stay', value: '29' },
           session: {
@@ -415,10 +415,24 @@ export const LargeDiff: Story = {
           created: { status: 'stay', value: '"2023-06-12 11:30:56"' },
           updated: { status: 'deleted', value: '"2023-06-15 08:42:05"' },
         },
+        '67890': {
+          'name-value': { status: 'stay', value: '"Alexander"' },
+          age: { status: 'stay', value: '42' },
+          session: {
+            status: 'stay',
+            value: '<null>',
+          },
+          note: {
+            status: 'stay',
+            value: '<null>',
+          },
+          created: { status: 'stay', value: '"2023-06-12 11:30:56"' },
+          updated: { status: 'deleted', value: '"2023-06-15 08:42:05"' },
+        },
       },
       rowDiffs2: {
-        '1': {
-          'name-value': { status: 'stay', value: '"Alexander"' },
+        '12345': {
+          'name-value': { status: 'stay', value: '"John"' },
           age: { status: 'stay', value: '29' },
           session: {
             status: 'added',
@@ -433,18 +447,18 @@ export const LargeDiff: Story = {
           created: { status: 'stay', value: '"2023-06-12 11:30:56"' },
           updated: { status: 'added', value: '"2023-06-17 23:00:17"' },
         },
-        '23456': {
-          'name-value': { status: 'added', value: '"Smith"' },
-          age: { status: 'added', value: '42' },
+        '67890': {
+          'name-value': { status: 'stay', value: '"Alexander"' },
+          age: { status: 'stay', value: '42' },
           session: {
-            status: 'added',
+            status: 'stay',
             value: '<null>',
           },
           note: {
-            status: 'added',
-            value: '',
+            status: 'stay',
+            value: '<null>',
           },
-          created: { status: 'added', value: '"2023-06-12 11:30:56"' },
+          created: { status: 'stay', value: '"2023-06-12 11:30:56"' },
           updated: { status: 'added', value: '"2023-06-17 23:00:17"' },
         },
       },

@@ -134,7 +134,7 @@ const steps: ReactourStep[] = [
     content: (
       <>
         <span>
-          主キーとみなせるカラム構成については <a href={'#'}>GitHub のドキュメント</a> を確認してください
+          主キーとみなせるカラム構成については <a href={'todo'}>GitHub のドキュメント</a> を確認してください
         </span>
       </>
     ),
