@@ -483,3 +483,29 @@ export const LargeDiff: Story = {
     },
   },
 }
+
+export const MultiByteDiff: Story = {
+  args: {
+    tableDiff: {
+      tableName: 'users',
+      primaryValues: ['1'],
+      primaryColName: 'id',
+      colNames: ['name', 'plan_code', 'address'],
+      rowDiffs1: {
+        '1': {
+          name: { status: 'deleted', value: '"佐藤太郎"' },
+          plan_code: { status: 'deleted', value: '1' },
+          address: { status: 'deleted', value: '"123-4567 東京都新宿区第一ビル本館"' },
+        },
+      },
+      rowDiffs2: {
+        '1': {
+          name: { status: 'added', value: '"sato taro"' },
+          plan_code: { status: 'deleted', value: '2' },
+          address: { status: 'added', value: '"123-4567 東京都新宿区 1st Bld."' },
+        },
+      },
+      noDiffColNames: [],
+    },
+  },
+}

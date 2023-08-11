@@ -201,17 +201,24 @@ export const DiffContent: FC<Props> = (props) => {
 const calcPxs: (tableDiff: TableDiff) => { primary: number; expand: number[]; ellipsis: number[]; sum: number; ellipsized: boolean } = (
   tableDiff: TableDiff
 ) => {
-  const rate = 9.61
+  const rate = 8
   const upper = 21
 
-  const primary = [...tableDiff.primaryValues.map((v) => v.length), tableDiff.primaryColName.length].reduce((a, b) => (a > b ? a : b)) * rate
+  const isMultibyte = /[ -~]/
+  const len: (s: string) => number = (s) =>
+    s
+      .split('')
+      .map((c) => (c.match(isMultibyte) != null ? 1 : 2))
+      .reduce((a, b) => a + b, 0)
+
+  const primary = [...tableDiff.primaryValues.map((v) => len(v)), tableDiff.primaryColName.length].reduce((a, b) => (a > b ? a : b)) * rate
   const rows = [...Object.values(tableDiff.rowDiffs1), ...Object.values(tableDiff.rowDiffs2)]
   const expand = tableDiff.colNames.map((colName) => {
-    return [colName.length, ...rows.map((row) => row[colName]?.value.length ?? 0)].reduce((a, b) => (a > b ? a : b)) * rate
+    return [len(colName), ...rows.map((row) => len(row[colName]?.value ?? ''))].reduce((a, b) => (a > b ? a : b)) * rate
   })
   const ellipsis = tableDiff.colNames.map((colName) => {
-    const fullLen = rows.map((row) => row[colName]?.value.length ?? 0).reduce((a, b) => (a > b ? a : b))
-    return (fullLen < colName.length ? colName.length : Math.min(upper, fullLen)) * rate
+    const fullLen = rows.map((row) => len(row[colName]?.value ?? '')).reduce((a, b) => (a > b ? a : b))
+    return (fullLen < len(colName) ? len(colName) : Math.min(upper, fullLen)) * rate
   })
   const cols = [primary, ...ellipsis].length
   const sum =
