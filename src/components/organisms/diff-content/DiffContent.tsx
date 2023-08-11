@@ -100,10 +100,6 @@ export const DiffContent: FC<Props> = (props) => {
 
   const pxs = calcPxs(props.tableDiff)
 
-  const noDiffColNames = props.tableDiff.colNames.filter((colName) =>
-    Object.values(props.tableDiff.rowDiffs1).every((row) => row[colName]?.status === 'stay')
-  )
-
   const [isShowNoDiffCol, setIsShowNoDiffCol] = useState(true)
 
   return (
@@ -120,7 +116,7 @@ export const DiffContent: FC<Props> = (props) => {
               }}
             />
           )}
-          {noDiffColNames.length !== 0 && (
+          {props.tableDiff.noDiffColNames.length !== 0 && (
             <IconHide
               variant={'medium'}
               hide={!isShowNoDiffCol}
@@ -142,7 +138,7 @@ export const DiffContent: FC<Props> = (props) => {
                 {props.tableDiff.colNames.map((colName, i) => {
                   const cellId = `${props.tableDiff.tableName}-${i}`
                   return (
-                    (isShowNoDiffCol || !noDiffColNames.includes(colName)) && (
+                    (isShowNoDiffCol || !props.tableDiff.noDiffColNames.includes(colName)) && (
                       <th
                         key={i}
                         id={cellId}
@@ -171,7 +167,7 @@ export const DiffContent: FC<Props> = (props) => {
                       colNames={props.tableDiff.colNames}
                       rowDiff={props.tableDiff.rowDiffs1[primaryValue]}
                       n={1}
-                      noDiffColNames={noDiffColNames}
+                      noDiffColNames={props.tableDiff.noDiffColNames}
                       isShowNoDiffCol={isShowNoDiffCol}
                     />
                     <ColsRow
@@ -180,7 +176,7 @@ export const DiffContent: FC<Props> = (props) => {
                       colNames={props.tableDiff.colNames}
                       rowDiff={props.tableDiff.rowDiffs2[primaryValue]}
                       n={2}
-                      noDiffColNames={noDiffColNames}
+                      noDiffColNames={props.tableDiff.noDiffColNames}
                       isShowNoDiffCol={isShowNoDiffCol}
                     />
                   </Fragment>

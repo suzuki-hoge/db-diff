@@ -38,4 +38,5 @@ export interface TableDiff {
   colNames: ColName[]
   rowDiffs1: RowDiff
   rowDiffs2: RowDiff
+  noDiffColNames: ColName[]
 }

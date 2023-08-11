@@ -26,6 +26,7 @@ export const RowDeleted: Story = {
         },
       },
       rowDiffs2: {},
+      noDiffColNames: [],
     },
   },
 }
@@ -44,6 +45,7 @@ export const RowAdded: Story = {
           age: { status: 'added', value: '29' },
         },
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -67,6 +69,7 @@ export const RowModified: Story = {
           age: { status: 'added', value: '15' },
         },
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -89,6 +92,7 @@ export const RowsDeleted: Story = {
         },
       },
       rowDiffs2: {},
+      noDiffColNames: [],
     },
   },
 }
@@ -111,6 +115,7 @@ export const RowsAdded: Story = {
           age: { status: 'added', value: '31' },
         },
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -142,6 +147,7 @@ export const RowsModified: Story = {
           age: { status: 'added', value: '42' },
         },
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -169,6 +175,7 @@ export const RowsModifiedAndDeleted: Story = {
           age: { status: 'added', value: '15' },
         },
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -196,6 +203,7 @@ export const RowsModifiedAndAdded: Story = {
           age: { status: 'added', value: '31' },
         },
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -219,6 +227,7 @@ export const ColModified: Story = {
           age: { status: 'added', value: '15' },
         },
       },
+      noDiffColNames: ['name'],
     },
   },
 }
@@ -241,6 +250,7 @@ export const ColRemoved: Story = {
           name: { status: 'stay', value: '"John"' },
         },
       },
+      noDiffColNames: ['name'],
     },
   },
 }
@@ -263,6 +273,7 @@ export const ColCreated: Story = {
           age: { status: 'added', value: '29' },
         },
       },
+      noDiffColNames: ['name'],
     },
   },
 }
@@ -286,6 +297,7 @@ export const ColMismatched: Story = {
           rate: { status: 'added', value: '1' },
         },
       },
+      noDiffColNames: ['name'],
     },
   },
 }
@@ -309,6 +321,7 @@ export const RowModifiedStringId: Story = {
           age: { status: 'added', value: '15' },
         },
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -340,6 +353,7 @@ export const RowsModifiedMultiUniqueColumn: Story = {
           age: { status: 'added', value: '31' },
         },
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -355,6 +369,7 @@ export const RowAddOnlyUniqueColumn: Story = {
         '1-"001"': {},
       },
       rowDiffs2: {},
+      noDiffColNames: [],
     },
   },
 }
@@ -370,6 +385,7 @@ export const RowDeletedOnlyUniqueColumn: Story = {
       rowDiffs2: {
         '1-"002"': {},
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -387,6 +403,7 @@ export const RowModifiedOnlyUniqueColumn: Story = {
       rowDiffs2: {
         '1-"002"': {},
       },
+      noDiffColNames: [],
     },
   },
 }
@@ -462,6 +479,7 @@ export const LargeDiff: Story = {
           updated: { status: 'added', value: '"2023-06-17 23:00:17"' },
         },
       },
+      noDiffColNames: ['name-value', 'age', 'created'],
     },
   },
 }
