@@ -26,11 +26,11 @@ export const ProjectUpdatePage: FC = () => {
   const testConnection: (project: Project) => void = (project) => {
     toast.dismiss()
     invoke<string>('test_connection_project_command', { projectJson: project })
-      .then((data) => {
-        toast.success(data, { duration: 4000, style: { maxWidth: 600 } })
+      .then(() => {
+        toast.success('接続できました')
       })
-      .catch((e: string) => {
-        toast.error(e, { duration: 8000, style: { maxWidth: 600 } })
+      .catch(() => {
+        toast.error('接続できません')
       })
   }
 

@@ -23,11 +23,11 @@ export const ProjectCreatePage: FC = () => {
   const testConnection: (project: Project) => void = (project) => {
     toast.dismiss()
     invoke<string>('test_connection_project_command', { projectJson: project })
-      .then((data) => {
-        toast.success(data, { duration: 4000, style: { minWidth: 900 } })
+      .then(() => {
+        toast.success('接続できました')
       })
-      .catch((e: string) => {
-        toast.error(e)
+      .catch(() => {
+        toast.error('接続できません')
       })
   }
 
