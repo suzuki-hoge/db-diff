@@ -6,12 +6,7 @@ const meta = {
   title: 'Molecules/ColorTagCard',
   component: ColorTagCard,
   tags: ['autodocs'],
-  argTypes: {
-    variant: {
-      control: 'select',
-      options: ['red', 'yellow', 'green', 'blue', 'purple'],
-    },
-  },
+  argTypes: {},
 } satisfies Meta<typeof ColorTagCard>
 
 export default meta
@@ -20,20 +15,20 @@ type Story = StoryObj<typeof meta>
 export const Red: Story = {
   args: {
     label: 'My Laravel Project',
-    variant: 'yellow',
+    color: 'yellow',
   },
 }
 
 export const Green: Story = {
   args: {
     label: 'Tutorial App',
-    variant: 'green',
+    color: 'green',
   },
 }
 
 export const Blue: Story = {
   args: {
     label: '副業のやつ ( RoR )',
-    variant: 'red',
+    color: 'red',
   },
 }

@@ -73,6 +73,7 @@ pub fn update_project(conn: &SqliteConnection, project: &Project) -> anyhow::Res
     diesel::update(schema::projects::table.find(&project.project_id))
         .set((
             schema::projects::name.eq(&record.name),
+            schema::projects::color.eq(&record.color),
             schema::projects::rdbms.eq(&record.rdbms),
             schema::projects::user.eq(&record.user),
             schema::projects::password.eq(&record.password),
