@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::ops::Deref;
 
 use itertools::Itertools;
+use rayon::prelude::*;
 
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -67,7 +68,7 @@ impl TableDiffJson {
 
         Self {
             table_name: table_diff.table_name,
-            primary_values: table_diff.primary_col_values.into_iter().map(|primary_col_value| primary_col_value.as_primary_value()).collect(),
+            primary_values: table_diff.primary_col_values_vec.into_iter().map(|primary_col_value| primary_col_value.as_primary_value()).collect(),
             primary_col_name: table_diff.primary_col_name,
             col_names: table_diff.col_names,
             row_diffs1,
@@ -127,24 +128,23 @@ pub fn create_snapshot_diff_command(
         .map(|(&table_name, table_snapshots)| (table_name, table_snapshots[0]))
         .collect();
 
-    let mut table_names1 = table_snapshots1.keys().cloned().collect_vec();
-    let mut table_names2 = table_snapshots2.keys().cloned().collect_vec();
-    table_names1.append(&mut table_names2);
+    let mut table_names = table_snapshots1.keys().cloned().collect_vec();
+    table_names.append(&mut table_snapshots2.keys().cloned().collect_vec());
+    let table_names = table_names.into_iter().unique().collect_vec();
 
     let snapshot_diff = SnapshotDiff::new(
         &create_diff_id(),
         &snapshot_id1,
         &snapshot_id2,
-        table_names1
-            .into_iter()
-            .unique()
+        table_names
+            .into_par_iter()
             .map(|table_name| {
                 create_table_diff(
                     table_snapshots1.get(table_name).map(|table_snapshot| table_snapshot.deref()),
                     table_snapshots2.get(table_name).map(|table_snapshot| table_snapshot.deref()),
                 )
             })
-            .filter(|table_diff| !table_diff.empty())
+            .filter(|table_diff| !table_diff.is_empty())
             .collect(),
     );
 

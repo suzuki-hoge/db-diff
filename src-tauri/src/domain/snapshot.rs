@@ -51,32 +51,32 @@ impl TableSnapshot {
         Self { table_name: table_name.clone(), primary_col_name, col_names, hash, row_snapshots }
     }
 
-    pub fn get_primary_col_values(&self) -> Vec<&PrimaryColValues> {
-        self.row_snapshots.iter().map(|row_snapshot| &row_snapshot.primary_col_values).collect()
+    pub fn get_primary_col_values_vec(&self) -> Vec<PrimaryColValues> {
+        self.row_snapshots.iter().map(|row_snapshot| row_snapshot.primary_col_values.clone()).collect()
     }
 
-    pub fn merge_primary_col_values<'a>(&'a self, other: &'a Self) -> Vec<&'a PrimaryColValues> {
+    pub fn merge_primary_col_values_vec(&self, other: &Self) -> Vec<PrimaryColValues> {
         let mut set = BTreeSet::new();
 
         for row in &self.row_snapshots {
-            set.insert(&row.primary_col_values);
+            set.insert(row.primary_col_values.clone());
         }
         for row in &other.row_snapshots {
-            set.insert(&row.primary_col_values);
+            set.insert(row.primary_col_values.clone());
         }
 
         set.into_iter().collect_vec()
     }
 
-    pub fn merge_col_names<'a>(&'a self, other: &'a Self) -> Vec<&'a ColName> {
+    pub fn merge_col_names(&self, other: &Self) -> Vec<ColName> {
         let mut result = vec![];
 
         for i in 0..max(self.col_names.len(), other.col_names.len()) {
-            if i < self.col_names.len() && !result.contains(&&self.col_names[i]) {
-                result.push(&self.col_names[i]);
+            if i < self.col_names.len() && !result.contains(&self.col_names[i]) {
+                result.push(self.col_names[i].clone());
             }
             if i < other.col_names.len() && !result.contains(&&other.col_names[i]) {
-                result.push(&other.col_names[i]);
+                result.push(other.col_names[i].clone());
             }
         }
 

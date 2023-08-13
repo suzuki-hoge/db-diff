@@ -15,19 +15,19 @@ export const DiffPage: FC = () => {
   const { snapshotId1, snapshotId2 } = location.state as { snapshotId1: string; snapshotId2: string }
 
   useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      if (isFirstMount.current) {
+        isFirstMount.current = false
+        return
+      }
+    }
+
     invoke<SnapshotDiff>('find_snapshot_diff_command', { snapshotId1, snapshotId2 })
       .then((data) => {
         setSnapshotDiff(data)
       })
       .catch((e: string) => {
         if (e === 'snapshot diff not created') {
-          if (process.env.NODE_ENV === 'development') {
-            if (isFirstMount.current) {
-              isFirstMount.current = false
-              return
-            }
-          }
-
           toast
             .promise(
               invoke<SnapshotDiff>('create_snapshot_diff_command', { snapshotId1, snapshotId2 }),

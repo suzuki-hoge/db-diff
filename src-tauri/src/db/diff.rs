@@ -30,6 +30,10 @@ pub fn insert_snapshot_diff(conn: &SqliteConnection, snapshot_diff: &SnapshotDif
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
+    use diesel::RunQueryDsl;
+
     use crate::db::create_connection;
     use crate::db::diff::{find_snapshot_diff, insert_snapshot_diff};
     use crate::db::project::insert_project;
@@ -40,7 +44,6 @@ mod tests {
     use crate::domain::project::{create_project_id, Project};
     use crate::domain::snapshot::ColValue::{SimpleNumber, SimpleString};
     use crate::domain::snapshot::{create_snapshot_id, ColValue, PrimaryColValues, SnapshotSummary};
-    use diesel::RunQueryDsl;
 
     fn n(s: &str) -> ColValue {
         SimpleNumber(s.to_string())
@@ -77,13 +80,21 @@ mod tests {
         assert_eq!(None, table_snapshot_opt);
 
         // insert
-        let mut table_diff = TableDiff::init(&"user".to_string(), &"id".to_string(), vec![&"name".to_string()]);
         let primary_col_values1 = PrimaryColValues::new(vec![n("1")]);
         let primary_col_values2 = PrimaryColValues::new(vec![n("2")]);
-        table_diff.row_diffs1.insert(primary_col_values1.as_primary_value(), vec![("name".to_string(), Deleted(s("John")))].into_iter().collect());
-        table_diff.row_diffs2.insert(primary_col_values2.as_primary_value(), vec![("name".to_string(), NoValue)].into_iter().collect());
-        table_diff.primary_col_values.push(primary_col_values1);
-        table_diff.primary_col_values.push(primary_col_values2);
+        let mut row_diffs1 = HashMap::new();
+        let mut row_diffs2 = HashMap::new();
+        row_diffs1.insert(primary_col_values1.as_primary_value(), vec![("name".to_string(), Deleted(s("John")))].into_iter().collect());
+        row_diffs2.insert(primary_col_values2.as_primary_value(), vec![("name".to_string(), NoValue)].into_iter().collect());
+
+        let table_diff = TableDiff {
+            table_name: "user".to_string(),
+            primary_col_values_vec: vec![primary_col_values1, primary_col_values2],
+            primary_col_name: "id".to_string(),
+            col_names: vec!["name".to_string()],
+            row_diffs1,
+            row_diffs2,
+        };
 
         let snapshot_diff = SnapshotDiff::new(&create_diff_id(), &snapshot_id1, &snapshot_id2, vec![table_diff]);
         insert_snapshot_diff(&conn, &snapshot_diff)?;
