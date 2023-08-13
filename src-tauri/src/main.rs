@@ -4,6 +4,7 @@ extern crate diesel;
 use tauri::Manager;
 
 use crate::command::state::AppState;
+use crate::db::migrate_sqlite_if_missing;
 
 mod command;
 mod db;
@@ -11,6 +12,8 @@ mod domain;
 mod dump;
 
 fn main() -> anyhow::Result<()> {
+    migrate_sqlite_if_missing()?;
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             command::project::all_projects_command,

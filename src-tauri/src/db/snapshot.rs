@@ -93,7 +93,7 @@ pub fn insert_table_snapshot(conn: &SqliteConnection, snapshot_id: &SnapshotId, 
 mod tests {
     use diesel::RunQueryDsl;
 
-    use crate::db::create_connection;
+    use crate::db::create_sqlite_connection;
     use crate::db::project::insert_project;
     use crate::db::snapshot::{
         all_snapshot_summaries, delete_snapshot_summary, find_table_snapshots, insert_snapshot_summary, insert_table_snapshot,
@@ -108,7 +108,7 @@ mod tests {
     fn snapshot_summary() -> anyhow::Result<()> {
         // setup
 
-        let conn = create_connection()?;
+        let conn = create_sqlite_connection()?;
         diesel::sql_query("delete from projects").execute(&conn)?;
 
         let project_id = create_project_id();
@@ -159,7 +159,7 @@ mod tests {
     fn table_snapshot() -> anyhow::Result<()> {
         // setup
 
-        let conn = create_connection()?;
+        let conn = create_sqlite_connection()?;
         diesel::sql_query("delete from projects").execute(&conn)?;
 
         let project_id = create_project_id();

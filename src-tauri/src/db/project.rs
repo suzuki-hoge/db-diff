@@ -95,7 +95,7 @@ pub fn delete_project(conn: &SqliteConnection, project_id: &ProjectId) -> anyhow
 mod tests {
     use diesel::RunQueryDsl;
 
-    use crate::db::create_connection;
+    use crate::db::create_sqlite_connection;
     use crate::db::project::{all_projects, delete_project, insert_project, update_project};
     use crate::domain::project::Project;
     use crate::domain::project::Rdbms::Mysql;
@@ -105,7 +105,7 @@ mod tests {
     fn project() -> anyhow::Result<()> {
         // setup
 
-        let conn = create_connection()?;
+        let conn = create_sqlite_connection()?;
         diesel::sql_query("delete from projects").execute(&conn)?;
 
         // all

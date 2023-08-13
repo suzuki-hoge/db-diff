@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use diesel::SqliteConnection;
 
-use crate::db::create_connection;
+use crate::db::create_sqlite_connection;
 use crate::domain::project::ProjectId;
 
 pub struct AppState {
@@ -12,7 +12,7 @@ pub struct AppState {
 
 impl AppState {
     pub fn new() -> anyhow::Result<Self> {
-        Ok(Self { conn: Mutex::new(create_connection()?), project_id: Mutex::new(None) })
+        Ok(Self { conn: Mutex::new(create_sqlite_connection()?), project_id: Mutex::new(None) })
     }
 
     pub fn set_project_id(&self, selected_project_id: ProjectId) {

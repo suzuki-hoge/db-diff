@@ -44,3 +44,9 @@ create table snapshot_diffs
     foreign key (snapshot_id1) references snapshot_summaries (snapshot_id) on delete cascade,
     foreign key (snapshot_id2) references snapshot_summaries (snapshot_id) on delete cascade
 );
+
+insert into projects (project_id, name, color, rdbms, user, password, host, port, `schema`)
+values ('D07231B4-D5CC-4E25-AF01-2D5F9DB59980', 'Sample 1', '#c2e0c6', 'MySQL', 'user', 'password', '127.0.0.1', '13306',
+        'sample1'),
+       ('0BB817C5-5045-4668-8385-0E0B6625FE0D', 'Sample 2', '#c5def5', 'MySQL', 'user', 'password', '127.0.0.1', '23306',
+        'sample2');
