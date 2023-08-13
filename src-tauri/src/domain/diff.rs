@@ -52,24 +52,6 @@ impl TableDiff {
     pub fn empty(&self) -> bool {
         self.row_diffs1.is_empty() && self.row_diffs2.is_empty()
     }
-
-    pub fn get_no_diff_col_names(&self) -> Vec<ColName> {
-        let mut col_names = vec![];
-        'outer: for col_name in self.col_names.iter() {
-            for (_, cols) in self.row_diffs1.iter() {
-                if cols.get(col_name).map(|col_diff| !col_diff.is_stay()).unwrap_or(false) {
-                    continue 'outer;
-                }
-            }
-            for (_, cols) in self.row_diffs2.iter() {
-                if cols.get(col_name).map(|col_diff| !col_diff.is_stay()).unwrap_or(false) {
-                    continue 'outer;
-                }
-            }
-            col_names.push(col_name.clone())
-        }
-        col_names
-    }
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
@@ -78,17 +60,6 @@ pub enum ColDiff {
     Stay(ColValue),
     Added(ColValue),
     Deleted(ColValue),
-}
-
-impl ColDiff {
-    fn is_stay(&self) -> bool {
-        match self {
-            NoValue => false,
-            Stay(_) => true,
-            Added(_) => false,
-            Deleted(_) => false,
-        }
-    }
 }
 
 pub fn create_table_diff(table_snapshot1: Option<&TableSnapshot>, table_snapshot2: Option<&TableSnapshot>) -> TableDiff {
@@ -397,126 +368,5 @@ mod tests_create_snapshot_diff {
 
         assert_eq!(1, act.row_diffs2.len());
         assert_eq!(&Added(s("John")), mk_act(&act.row_diffs2, &primary_col_values1, "name"));
-    }
-}
-
-#[cfg(test)]
-mod tests_get_no_diff_col_names {
-    use crate::domain::diff::ColDiff::{Added, Deleted, Stay};
-    use crate::domain::diff::TableDiff;
-    use crate::domain::snapshot::ColValue::{SimpleNumber, SimpleString};
-    use crate::domain::snapshot::{ColValue, PrimaryColValues};
-    use std::collections::HashMap;
-
-    fn n(s: &str) -> ColValue {
-        SimpleNumber(s.to_string())
-    }
-
-    fn s(s: &str) -> ColValue {
-        SimpleString(s.to_string())
-    }
-
-    #[test]
-    fn test_row_diffs1_no_result() {
-        let mut row_diffs1 = HashMap::new();
-        let mut diff = HashMap::new();
-        diff.insert("name".to_string(), Deleted(s("John")));
-        diff.insert("age".to_string(), Deleted(n("29")));
-        row_diffs1.insert("1".to_string(), diff);
-
-        let row_diffs2 = HashMap::new();
-
-        let sut = TableDiff {
-            table_name: "test".to_string(),
-            primary_col_values: vec![PrimaryColValues { col_values: vec![n("1")] }],
-            primary_col_name: "id".to_string(),
-            col_names: vec!["name".to_string(), "age".to_string()],
-            row_diffs1,
-            row_diffs2,
-        };
-
-        assert_eq!(0, sut.get_no_diff_col_names().len());
-    }
-
-    #[test]
-    fn test_row_diffs2_no_result() {
-        let row_diffs1 = HashMap::new();
-
-        let mut row_diffs2 = HashMap::new();
-        let mut diff = HashMap::new();
-        diff.insert("name".to_string(), Added(s("John")));
-        diff.insert("age".to_string(), Added(n("29")));
-        row_diffs2.insert("1".to_string(), diff);
-
-        let sut = TableDiff {
-            table_name: "test".to_string(),
-            primary_col_values: vec![PrimaryColValues { col_values: vec![n("1")] }],
-            primary_col_name: "id".to_string(),
-            col_names: vec!["name".to_string(), "age".to_string()],
-            row_diffs1,
-            row_diffs2,
-        };
-
-        assert_eq!(0, sut.get_no_diff_col_names().len());
-    }
-
-    #[test]
-    fn test_row_diffs1_row_diffs2_no_result() {
-        let mut row_diffs1 = HashMap::new();
-        let mut diff = HashMap::new();
-        diff.insert("name".to_string(), Deleted(s("John")));
-        diff.insert("age".to_string(), Deleted(n("29")));
-        row_diffs1.insert("1".to_string(), diff);
-        let mut diff = HashMap::new();
-        diff.insert("name".to_string(), Stay(s("Jane")));
-        diff.insert("age".to_string(), Deleted(n("29")));
-        row_diffs1.insert("1".to_string(), diff);
-
-        let mut row_diffs2 = HashMap::new();
-        let mut diff = HashMap::new();
-        diff.insert("name".to_string(), Added(s("Jack")));
-        diff.insert("age".to_string(), Added(n("42")));
-        row_diffs2.insert("1".to_string(), diff);
-        let mut diff = HashMap::new();
-        diff.insert("name".to_string(), Stay(s("Jane")));
-        diff.insert("age".to_string(), Added(n("42")));
-        row_diffs2.insert("2".to_string(), diff);
-
-        let sut = TableDiff {
-            table_name: "test".to_string(),
-            primary_col_values: vec![PrimaryColValues { col_values: vec![n("1")] }],
-            primary_col_name: "id".to_string(),
-            col_names: vec!["name".to_string(), "age".to_string()],
-            row_diffs1,
-            row_diffs2,
-        };
-
-        assert_eq!(0, sut.get_no_diff_col_names().len());
-    }
-
-    #[test]
-    fn test_any_result() {
-        let mut row_diffs1 = HashMap::new();
-        let mut diff = HashMap::new();
-        diff.insert("name".to_string(), Stay(s("John")));
-        diff.insert("age".to_string(), Deleted(n("29")));
-        row_diffs1.insert("1".to_string(), diff);
-
-        let mut row_diffs2 = HashMap::new();
-        let mut diff = HashMap::new();
-        diff.insert("name".to_string(), Stay(s("John")));
-        diff.insert("age".to_string(), Added(n("42")));
-        row_diffs2.insert("1".to_string(), diff);
-
-        let sut = TableDiff {
-            table_name: "test".to_string(),
-            primary_col_values: vec![PrimaryColValues { col_values: vec![n("1")] }],
-            primary_col_name: "id".to_string(),
-            col_names: vec!["name".to_string(), "age".to_string()],
-            row_diffs1,
-            row_diffs2,
-        };
-
-        assert_eq!(vec!["name".to_string()], sut.get_no_diff_col_names());
     }
 }

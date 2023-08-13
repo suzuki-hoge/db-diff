@@ -27,9 +27,15 @@ export interface SnapshotDiff {
   tableDiffs: TableDiff[]
 }
 
-type PrimaryValue = string
-type ColName = string
-type RowDiff = Record<PrimaryValue, Record<ColName, { status: 'stay' | 'added' | 'deleted' | 'none'; value: string }>>
+export type PrimaryValue = string
+export type ColName = string
+
+export interface ColDiff {
+  status: 'stay' | 'added' | 'deleted' | 'none'
+  value: string
+}
+
+export type RowDiff = Record<PrimaryValue, Record<ColName, ColDiff>>
 
 export interface TableDiff {
   tableName: string
@@ -38,5 +44,4 @@ export interface TableDiff {
   colNames: ColName[]
   rowDiffs1: RowDiff
   rowDiffs2: RowDiff
-  noDiffColNames: ColName[]
 }

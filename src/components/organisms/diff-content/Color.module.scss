@@ -1,0 +1,19 @@
+.stay {
+  background-color: var(--color-diff-stay);
+}
+
+.added {
+  background-color: var(--color-diff-added);
+}
+
+.deleted {
+  background-color: var(--color-diff-deleted);
+}
+
+.none {
+  background-color: var(--color-diff-none);
+}
+
+.null {
+  color: gray;
+}

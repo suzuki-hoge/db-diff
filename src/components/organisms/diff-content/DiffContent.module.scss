@@ -10,12 +10,6 @@
   flex-direction: row;
   column-gap: 2rem;
   align-items: center;
-
-  div {
-    display: flex;
-    flex-direction: row;
-    column-gap: 0.5rem;
-  }
 }
 
 .body {
@@ -36,10 +30,6 @@
 
 .label {
   font-size: 1.5rem;
-}
-
-@mixin border {
-  border: solid 1px var(--color-frame);
 }
 
 table {
@@ -86,32 +76,8 @@ table {
     border-bottom-right-radius: calc(#{var(--radius-flame)} - 1px);
   }
 
-  .primaryOnly {
-    height: 4rem;
-  }
-
   tr:last-child .primaryOnly:last-child {
     border-bottom-left-radius: calc(#{var(--radius-flame)} - 1px);
     border-bottom-right-radius: calc(#{var(--radius-flame)} - 1px);
   }
-}
-
-.stay {
-  background-color: var(--color-diff-stay);
-}
-
-.added {
-  background-color: var(--color-diff-added);
-}
-
-.deleted {
-  background-color: var(--color-diff-deleted);
-}
-
-.none {
-  background-color: var(--color-diff-none);
-}
-
-.null {
-  color: gray;
 }

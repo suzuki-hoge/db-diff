@@ -1,87 +1,15 @@
 import React, { type FC, Fragment, useEffect, useRef, useState } from 'react'
-import { type TableDiff } from '../../../types'
+import { type PrimaryValue, type RowDiff, type TableDiff } from '../../../types'
 import styles from './DiffContent.module.scss'
 import { Resizer } from './Resizer'
-import { IconExpand } from '../../atoms/icon-expand/IconExpand'
-import { IconHide } from '../../atoms/icon-hide/IconHide'
+import { ColsRow } from './ColsRow'
+import { PrimaryOnlyRow } from './PrimaryOnlyRow'
+import { NavPage } from './NavPage'
+import { NavExpand } from './NavExpand'
+import { NavHide } from './NavHide'
 
 interface Props {
   tableDiff: TableDiff
-}
-
-const colors = {
-  stay: styles.stay,
-  added: styles.added,
-  deleted: styles.deleted,
-  none: styles.none,
-}
-
-interface ColsRowProps {
-  primaryValue: string
-  colNames: string[]
-  rowDiff?: Record<string, { status: 'stay' | 'added' | 'deleted' | 'none'; value: string }>
-  n: number
-  noDiffColNames: string[]
-  isShowNoDiffCol: boolean
-}
-
-const ColsRow: FC<ColsRowProps> = (props) => {
-  return (
-    <tr>
-      {props.n === 1 && (
-        <td rowSpan={2} align={'left'}>
-          {props.primaryValue}
-        </td>
-      )}
-      {props.colNames.map((colName, i) => {
-        if (props.rowDiff !== undefined) {
-          if (colName in props.rowDiff) {
-            if (props.isShowNoDiffCol || !props.noDiffColNames.includes(colName)) {
-              const nullStyle = props.rowDiff[colName].value === '<null>' ? styles.null : ''
-              return (
-                <td key={i} className={[colors[props.rowDiff[colName].status], nullStyle].join(' ')} align={'left'}>
-                  {props.rowDiff[colName].value}
-                </td>
-              )
-            } else {
-              return <Fragment key={i} />
-            }
-          } else {
-            return <td key={i} className={colors.none} align={'left'}></td>
-          }
-        } else {
-          return <td key={i} className={colors.none} align={'left'}></td>
-        }
-      })}
-    </tr>
-  )
-}
-
-interface PrimaryOnlyRowProps {
-  primaryValue: string
-  rowDiff1: boolean
-  rowDiff2: boolean
-}
-
-const PrimaryOnlyRow: FC<PrimaryOnlyRowProps> = (props) => {
-  return (
-    <>
-      {props.rowDiff1 && (
-        <tr>
-          <td className={[styles.primaryOnly, colors.deleted].join(' ')} align={'left'}>
-            {props.primaryValue}
-          </td>
-        </tr>
-      )}
-      {props.rowDiff2 && (
-        <tr>
-          <td className={[styles.primaryOnly, colors.added].join(' ')} align={'left'}>
-            {props.primaryValue}
-          </td>
-        </tr>
-      )}
-    </>
-  )
 }
 
 export const DiffContent: FC<Props> = (props) => {
@@ -96,36 +24,29 @@ export const DiffContent: FC<Props> = (props) => {
     }
   }, [table])
 
-  const [expand, setExpand] = useState(false)
-
-  const pxs = calcPxs(props.tableDiff)
-
+  const [isExpanded, setIsExpanded] = useState(false)
   const [isShowNoDiffCol, setIsShowNoDiffCol] = useState(true)
 
+  const len = props.tableDiff.primaryValues.length
+  const perpage = 30
+
+  const [s, setS] = useState(0)
+
+  const tableDiff = pick(props.tableDiff, s, s + perpage)
+
+  const pxs = calcPxs(tableDiff)
+
+  const noDiffColNames = tableDiff.colNames.filter((colName) =>
+    [...Object.values(tableDiff.rowDiffs1), ...Object.values(tableDiff.rowDiffs2)].every((row) => row[colName]?.status === 'stay')
+  )
+
   return (
-    <div id={props.tableDiff.tableName} className={styles.component}>
+    <div id={tableDiff.tableName} className={styles.component}>
+      <span className={styles.label}>{tableDiff.tableName}</span>
       <div className={styles.header}>
-        <span className={styles.label}>{props.tableDiff.tableName}</span>
-        <div>
-          {pxs.ellipsized && (
-            <IconExpand
-              variant={'medium'}
-              expanded={expand}
-              onClick={() => {
-                setExpand(!expand)
-              }}
-            />
-          )}
-          {props.tableDiff.noDiffColNames.length !== 0 && (
-            <IconHide
-              variant={'medium'}
-              hide={!isShowNoDiffCol}
-              onClick={() => {
-                setIsShowNoDiffCol(!isShowNoDiffCol)
-              }}
-            />
-          )}
-        </div>
+        <NavPage s={s} perpage={perpage} len={len} setS={setS} />
+        {pxs.ellipsized && <NavExpand isExpanded={isExpanded} setIsExpanded={setIsExpanded} />}
+        {noDiffColNames.length !== 0 && <NavHide isShowNoDiffCol={isShowNoDiffCol} setIsShowNoDiffCol={setIsShowNoDiffCol} />}
       </div>
       <div className={styles.body}>
         <div style={{ width: `${pxs.sum}px` }}>
@@ -133,18 +54,18 @@ export const DiffContent: FC<Props> = (props) => {
             <thead>
               <tr>
                 <th align={'left'} style={{ width: `${pxs.primary}px` }}>
-                  {props.tableDiff.primaryColName}
+                  {tableDiff.primaryColName}
                 </th>
-                {props.tableDiff.colNames.map((colName, i) => {
-                  const cellId = `${props.tableDiff.tableName}-${i}`
+                {tableDiff.colNames.map((colName, i) => {
+                  const cellId = `${tableDiff.tableName}-${i}`
                   return (
-                    (isShowNoDiffCol || !props.tableDiff.noDiffColNames.includes(colName)) && (
+                    (isShowNoDiffCol || !noDiffColNames.includes(colName)) && (
                       <th
                         key={i}
                         id={cellId}
                         align={'left'}
                         style={
-                          expand
+                          isExpanded
                             ? { width: `${pxs.expand[i]}px`, maxWidth: `${pxs.expand[i]}px` }
                             : { width: `${pxs.ellipsis[i]}px`, maxWidth: `${pxs.expand[i]}px` }
                         }
@@ -158,25 +79,25 @@ export const DiffContent: FC<Props> = (props) => {
               </tr>
             </thead>
             <tbody>
-              {props.tableDiff.primaryValues.map((primaryValue, i) =>
-                props.tableDiff.colNames.length !== 0 ? (
+              {tableDiff.primaryValues.map((primaryValue, i) =>
+                tableDiff.colNames.length !== 0 ? (
                   <Fragment key={i}>
                     <ColsRow
                       key={`${i}-1`}
                       primaryValue={primaryValue}
-                      colNames={props.tableDiff.colNames}
-                      rowDiff={props.tableDiff.rowDiffs1[primaryValue]}
+                      colNames={tableDiff.colNames}
+                      rowDiff={tableDiff.rowDiffs1[primaryValue]}
                       n={1}
-                      noDiffColNames={props.tableDiff.noDiffColNames}
+                      noDiffColNames={noDiffColNames}
                       isShowNoDiffCol={isShowNoDiffCol}
                     />
                     <ColsRow
                       key={`${i}-2`}
                       primaryValue={primaryValue}
-                      colNames={props.tableDiff.colNames}
-                      rowDiff={props.tableDiff.rowDiffs2[primaryValue]}
+                      colNames={tableDiff.colNames}
+                      rowDiff={tableDiff.rowDiffs2[primaryValue]}
                       n={2}
-                      noDiffColNames={props.tableDiff.noDiffColNames}
+                      noDiffColNames={noDiffColNames}
                       isShowNoDiffCol={isShowNoDiffCol}
                     />
                   </Fragment>
@@ -184,8 +105,8 @@ export const DiffContent: FC<Props> = (props) => {
                   <Fragment key={i}>
                     <PrimaryOnlyRow
                       primaryValue={primaryValue}
-                      rowDiff1={props.tableDiff.rowDiffs1[primaryValue] !== undefined}
-                      rowDiff2={props.tableDiff.rowDiffs2[primaryValue] !== undefined}
+                      rowDiff1={tableDiff.rowDiffs1[primaryValue] !== undefined}
+                      rowDiff2={tableDiff.rowDiffs2[primaryValue] !== undefined}
                     />
                   </Fragment>
                 )
@@ -196,6 +117,24 @@ export const DiffContent: FC<Props> = (props) => {
       </div>
     </div>
   )
+}
+
+const pick: (tableDiff: TableDiff, s: number, e: number) => TableDiff = (tableDiff: TableDiff, s: number, e: number) => {
+  const primaryValues = tableDiff.primaryValues.slice(s, e)
+
+  const record: (primaryValues: PrimaryValue[], rowDiff: RowDiff) => RowDiff = (primaryValues: PrimaryValue[], rowDiff: RowDiff) => {
+    const filtered = primaryValues.map((primaryValue) => [primaryValue, rowDiff[primaryValue]])
+    return Object.fromEntries(filtered.filter((x) => x[1]))
+  }
+
+  return {
+    tableName: tableDiff.tableName,
+    primaryValues,
+    primaryColName: tableDiff.primaryColName,
+    colNames: tableDiff.colNames,
+    rowDiffs1: record(primaryValues, tableDiff.rowDiffs1),
+    rowDiffs2: record(primaryValues, tableDiff.rowDiffs2),
+  }
 }
 
 const calcPxs: (tableDiff: TableDiff) => { primary: number; expand: number[]; ellipsis: number[]; sum: number; ellipsized: boolean } = (

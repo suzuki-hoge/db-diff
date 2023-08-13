@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 
 import { DiffViewer } from './DiffViewer'
-import { type TableDiff } from '../../../types'
 import { withRouter } from 'storybook-addon-react-router-v6'
+import { type TableDiff } from '../../../types'
 
 const meta = {
   title: 'Templates/DiffViewer',
@@ -15,57 +15,70 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-const tableDiff: Omit<TableDiff, 'tableName'> = {
-  primaryValues: ['1', '2'],
-  primaryColName: 'id',
-  colNames: ['name', 'age'],
-  rowDiffs1: {
-    '1': {
-      name: { status: 'deleted', value: '"John"' },
-      age: { status: 'deleted', value: '29' },
-    },
-    '2': {
-      name: { status: 'deleted', value: '"Alice"' },
-      age: { status: 'deleted', value: '31' },
-    },
-  },
-  rowDiffs2: {
-    '1': {
-      name: { status: 'added', value: '"Jane"' },
-      age: { status: 'added', value: '15' },
-    },
+const object: (x: any[]) => Record<any, any> = (x) => Object.fromEntries(new Map(x))
+
+const create: (tablesN: number, primaryValuesN: number, colsN: number) => TableDiff[] = (tablesN, primaryValuesN, colsN) => {
+  const tables = [...Array(tablesN).keys()]
+  const primaryValues = [...Array(primaryValuesN).keys()].map((i) => `${i}`)
+  const cols = [...Array(colsN).keys()]
+
+  return tables.map((table) => ({
+    tableName: `table-${table}`,
+    primaryValues,
+    primaryColName: 'id',
+    colNames: cols.map((col) => `col-${col}`),
+    rowDiffs1: object(
+      primaryValues.map((primaryValue) => [
+        primaryValue,
+        object(
+          cols.map((col) => [
+            `col-${col}`,
+            {
+              status: 'deleted',
+              value: `prev-${col}`,
+            },
+          ])
+        ),
+      ])
+    ),
+    rowDiffs2: object(
+      primaryValues.map((primaryValue) => [
+        primaryValue,
+        object(
+          cols.map((col) => [
+            `col-${col}`,
+            {
+              status: 'added',
+              value: `current-${col}`,
+            },
+          ])
+        ),
+      ])
+    ),
+  }))
+}
+
+export const Small: Story = {
+  args: {
+    tableDiffs: create(5, 3, 5),
   },
 }
 
-const tableNames = [
-  'actions',
-  'administrators',
-  'bills',
-  'campaigns',
-  'cards',
-  'emails',
-  'events',
-  'friends',
-  'groups',
-  'items',
-  'letters',
-  'locks',
-  'login_histories',
-  'mails',
-  'messages',
-  'options',
-  'payments',
-  'plans',
-  'profiles',
-  'receipts',
-  'roles',
-  'shipments',
-  'users',
-]
-
-export const Component: Story = {
+export const Medium: Story = {
   args: {
-    tableDiffs: tableNames.map((tableName) => ({ tableName, ...tableDiff })),
+    tableDiffs: create(5, 10, 10),
+  },
+}
+
+export const Large: Story = {
+  args: {
+    tableDiffs: create(10, 25, 20),
+  },
+}
+
+export const Huge: Story = {
+  args: {
+    tableDiffs: create(3, 1000, 5),
   },
 }
 

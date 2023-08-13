@@ -43,13 +43,10 @@ pub struct TableDiffJson {
     pub col_names: Vec<ColName>,
     pub row_diffs1: HashMap<PrimaryValue, HashMap<ColName, HashMap<String, String>>>,
     pub row_diffs2: HashMap<PrimaryValue, HashMap<ColName, HashMap<String, String>>>,
-    pub no_diff_col_names: Vec<ColName>,
 }
 
 impl TableDiffJson {
     fn from(table_diff: TableDiff) -> Self {
-        let no_diff_col_names = table_diff.get_no_diff_col_names();
-
         let mut row_diffs1 = HashMap::new();
         for (primary_value, col) in table_diff.row_diffs1 {
             let mut cols = HashMap::new();
@@ -75,7 +72,6 @@ impl TableDiffJson {
             col_names: table_diff.col_names,
             row_diffs1,
             row_diffs2,
-            no_diff_col_names,
         }
     }
 
