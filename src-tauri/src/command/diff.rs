@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::ops::Deref;
 
 use itertools::Itertools;
 
@@ -138,12 +137,7 @@ pub fn create_snapshot_diff_command(
         table_names1
             .into_iter()
             .unique()
-            .map(|table_name| {
-                create_table_diff(
-                    table_snapshots1.get(table_name).map(|table_snapshot| table_snapshot.deref()),
-                    table_snapshots2.get(table_name).map(|table_snapshot| table_snapshot.deref()),
-                )
-            })
+            .map(|table_name| create_table_diff(table_snapshots1.get(table_name).copied(), table_snapshots2.get(table_name).copied()))
             .filter(|table_diff| !table_diff.empty())
             .collect(),
     );
