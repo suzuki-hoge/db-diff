@@ -2,12 +2,16 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - release*
+
   workflow_dispatch:
 
 jobs:
   release:
+    permissions:
+      contents: write
+
     strategy:
       fail-fast: false
       matrix:
@@ -17,17 +21,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version-file: ./.node-version
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Build
         run: yarn && yarn build
