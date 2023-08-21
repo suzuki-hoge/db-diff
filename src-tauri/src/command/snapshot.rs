@@ -7,6 +7,7 @@ use crate::db::project::all_projects;
 use crate::db::snapshot::{all_snapshot_summaries, delete_snapshot_summary, update_snapshot_summary};
 use crate::domain::snapshot::{SnapshotId, SnapshotName, SnapshotSummary};
 use crate::dump::dump;
+use crate::logger;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,31 +29,45 @@ impl SnapshotSummaryJson {
 
 #[tauri::command]
 pub fn all_snapshot_summaries_command(app_state: State<'_, AppState>) -> Result<Vec<SnapshotSummaryJson>, String> {
+    logger::info("start all_snapshot_summaries_command");
+
     let conn = app_state.conn.lock().unwrap();
     let project_id = app_state.project_id.lock().unwrap();
     let project_id = project_id.as_ref().unwrap();
 
-    all_snapshot_summaries(&conn, project_id)
+    let x = all_snapshot_summaries(&conn, project_id)
         .map(|snapshot_summaries| snapshot_summaries.into_iter().map(SnapshotSummaryJson::from).collect_vec())
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string());
+    logger::info("end all_snapshot_summaries_command");
+    x
 }
 
 #[tauri::command]
 pub fn update_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_summary_json: SnapshotSummaryJson) -> Result<(), String> {
+    logger::info("start update_snapshot_summary_command");
+
     let conn = app_state.conn.lock().unwrap();
 
-    update_snapshot_summary(&conn, &snapshot_summary_json.into()).map_err(|e| e.to_string())
+    let x = update_snapshot_summary(&conn, &snapshot_summary_json.into()).map_err(|e| e.to_string());
+    logger::info("end update_snapshot_summary_command");
+    x
 }
 
 #[tauri::command]
 pub fn delete_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_id: SnapshotId) -> Result<(), String> {
+    logger::info("start delete_snapshot_summary_command");
+
     let conn = app_state.conn.lock().unwrap();
 
-    delete_snapshot_summary(&conn, &snapshot_id).map_err(|e| e.to_string())
+    let x = delete_snapshot_summary(&conn, &snapshot_id).map_err(|e| e.to_string());
+    logger::info("end delete_snapshot_summary_command");
+    x
 }
 
 #[tauri::command]
 pub fn dump_snapshot_command(app_state: State<'_, AppState>, snapshot_name: SnapshotName) -> Result<(), String> {
+    logger::info("start dump_snapshot_command");
+
     let conn = app_state.conn.lock().unwrap();
     let project_id = app_state.project_id.lock().unwrap();
     let project_id = project_id.as_ref().unwrap();
@@ -61,6 +76,8 @@ pub fn dump_snapshot_command(app_state: State<'_, AppState>, snapshot_name: Snap
     let project = projects.iter().find(|project| &project.project_id == project_id).unwrap();
 
     dump(&conn, project, snapshot_name).map_err(|e| e.to_string())?;
+
+    logger::info("end dump_snapshot_command");
 
     Ok(())
 }

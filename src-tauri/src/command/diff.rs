@@ -13,6 +13,7 @@ use crate::domain::diff::ColDiff::{Added, Deleted, NoValue, Stay};
 use crate::domain::diff::{create_diff_id, create_table_diff, ColDiff, DiffId, SnapshotDiff, TableDiff};
 use crate::domain::schema::{ColName, PrimaryValue, TableName};
 use crate::domain::snapshot::{SnapshotId, TableSnapshot};
+use crate::logger;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -93,6 +94,8 @@ pub fn find_snapshot_diff_command(
     snapshot_id1: SnapshotId,
     snapshot_id2: SnapshotId,
 ) -> Result<SnapshotDiffJson, String> {
+    logger::info("start find_snapshot_diff_command");
+
     let conn = app_state.conn.lock().unwrap();
 
     let snapshot_diff = match find_snapshot_diff(&conn, &snapshot_id1, &snapshot_id2).map_err(|e| e.to_string())? {
@@ -100,7 +103,9 @@ pub fn find_snapshot_diff_command(
         None => Err("snapshot diff not created".to_string()),
     }?;
 
-    Ok(SnapshotDiffJson::from(snapshot_diff))
+    let x = Ok(SnapshotDiffJson::from(snapshot_diff));
+    logger::info("end find_snapshot_diff_command");
+    x
 }
 
 #[tauri::command]
@@ -109,6 +114,8 @@ pub fn create_snapshot_diff_command(
     snapshot_id1: SnapshotId,
     snapshot_id2: SnapshotId,
 ) -> Result<SnapshotDiffJson, String> {
+    logger::info("start create_snapshot_diff_command");
+
     let conn = app_state.conn.lock().unwrap();
 
     let table_snapshots1 = find_table_snapshots(&conn, &snapshot_id1).map_err(|e| e.to_string())?;
@@ -150,5 +157,7 @@ pub fn create_snapshot_diff_command(
 
     insert_snapshot_diff(&conn, &snapshot_diff).map_err(|e| e.to_string())?;
 
-    Ok(SnapshotDiffJson::from(snapshot_diff))
+    let x = Ok(SnapshotDiffJson::from(snapshot_diff));
+    logger::info("end create_snapshot_diff_command");
+    x
 }
