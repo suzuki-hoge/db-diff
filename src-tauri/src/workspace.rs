@@ -1,10 +1,13 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use anyhow::anyhow;
-use home_dir::HomeDirExt;
+use directories::UserDirs;
 
 pub fn workspace_dir() -> anyhow::Result<PathBuf> {
-    Path::new("~/.db-diff").expand_home().map_err(|e| anyhow!(e))
+    match UserDirs::new() {
+        Some(user_dirs) => Ok(user_dirs.home_dir().join(".db-diff")),
+        None => Err(anyhow!("home dir expansion failed.")),
+    }
 }
 
 pub fn workspace_path(s: &str) -> anyhow::Result<PathBuf> {
