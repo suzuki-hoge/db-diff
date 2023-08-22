@@ -1,14 +1,10 @@
 #[macro_use]
 extern crate diesel;
 
-
-
-
 use tauri::Manager;
 
 use crate::command::state::AppState;
 use crate::db::migrate_sqlite_if_missing;
-
 
 mod command;
 mod db;
