@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::ops::Deref;
 
 use itertools::Itertools;
 
@@ -104,7 +103,7 @@ pub fn find_snapshot_diff_command(
     }?;
 
     let x = Ok(SnapshotDiffJson::from(snapshot_diff));
-    logger::info("end find_snapshot_diff_command");
+    logger::info("end   find_snapshot_diff_command");
     x
 }
 
@@ -145,12 +144,7 @@ pub fn create_snapshot_diff_command(
         table_names1
             .into_iter()
             .unique()
-            .map(|table_name| {
-                create_table_diff(
-                    table_snapshots1.get(table_name).map(|table_snapshot| table_snapshot.deref()),
-                    table_snapshots2.get(table_name).map(|table_snapshot| table_snapshot.deref()),
-                )
-            })
+            .map(|table_name| create_table_diff(table_snapshots1.get(table_name).copied(), table_snapshots2.get(table_name).copied()))
             .filter(|table_diff| !table_diff.empty())
             .collect(),
     );
@@ -158,6 +152,6 @@ pub fn create_snapshot_diff_command(
     insert_snapshot_diff(&conn, &snapshot_diff).map_err(|e| e.to_string())?;
 
     let x = Ok(SnapshotDiffJson::from(snapshot_diff));
-    logger::info("end create_snapshot_diff_command");
+    logger::info("end   create_snapshot_diff_command");
     x
 }

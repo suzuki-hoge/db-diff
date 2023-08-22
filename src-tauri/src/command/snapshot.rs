@@ -38,7 +38,7 @@ pub fn all_snapshot_summaries_command(app_state: State<'_, AppState>) -> Result<
     let x = all_snapshot_summaries(&conn, project_id)
         .map(|snapshot_summaries| snapshot_summaries.into_iter().map(SnapshotSummaryJson::from).collect_vec())
         .map_err(|e| e.to_string());
-    logger::info("end all_snapshot_summaries_command");
+    logger::info("end   all_snapshot_summaries_command");
     x
 }
 
@@ -49,7 +49,7 @@ pub fn update_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_
     let conn = app_state.conn.lock().unwrap();
 
     let x = update_snapshot_summary(&conn, &snapshot_summary_json.into()).map_err(|e| e.to_string());
-    logger::info("end update_snapshot_summary_command");
+    logger::info("end   update_snapshot_summary_command");
     x
 }
 
@@ -60,7 +60,7 @@ pub fn delete_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_
     let conn = app_state.conn.lock().unwrap();
 
     let x = delete_snapshot_summary(&conn, &snapshot_id).map_err(|e| e.to_string());
-    logger::info("end delete_snapshot_summary_command");
+    logger::info("end   delete_snapshot_summary_command");
     x
 }
 
@@ -77,7 +77,7 @@ pub fn dump_snapshot_command(app_state: State<'_, AppState>, snapshot_name: Snap
 
     dump(&conn, project, snapshot_name).map_err(|e| e.to_string())?;
 
-    logger::info("end dump_snapshot_command");
+    logger::info("end   dump_snapshot_command");
 
     Ok(())
 }

@@ -64,7 +64,7 @@ pub fn all_projects_command(app_state: State<'_, AppState>) -> Result<Vec<Projec
     let conn = app_state.conn.lock().unwrap();
 
     let x = all_projects(&conn).map(|projects| projects.into_iter().map(ProjectJson::from).collect_vec()).map_err(|e| e.to_string());
-    logger::info("end all_projects_command");
+    logger::info("end   all_projects_command");
     x
 }
 
@@ -84,7 +84,7 @@ pub fn select_project_command(app_state: State<'_, AppState>, project_id: Projec
         }
         Err(e) => Err(e.to_string()),
     };
-    logger::info("end select_project_command");
+    logger::info("end   select_project_command");
     x
 }
 
@@ -98,7 +98,7 @@ pub fn test_connection_project_command(project_json: ProjectJson) -> Result<Stri
         Ok(_) => Ok(project.create_url()),
         Err(_e) => Err(project.create_url()),
     };
-    logger::info("end test_connection_project_command");
+    logger::info("end   test_connection_project_command");
     x
 }
 
@@ -109,7 +109,7 @@ pub fn insert_project_command(app_state: State<'_, AppState>, project_json: Proj
     let conn = app_state.conn.lock().unwrap();
 
     let x = insert_project(&conn, &project_json.into()).map_err(|e| e.to_string());
-    logger::info("end insert_project_command");
+    logger::info("end   insert_project_command");
     x
 }
 
@@ -120,7 +120,7 @@ pub fn update_project_command(app_state: State<'_, AppState>, project_json: Proj
     let conn = app_state.conn.lock().unwrap();
 
     let x = update_project(&conn, &project_json.into()).map_err(|e| e.to_string());
-    logger::info("end update_project_command");
+    logger::info("end   update_project_command");
     x
 }
 
@@ -131,6 +131,6 @@ pub fn delete_project_command(app_state: State<'_, AppState>, project_id: Projec
     let conn = app_state.conn.lock().unwrap();
 
     let x = delete_project(&conn, &project_id).map_err(|e| e.to_string());
-    logger::info("end delete_project_command");
+    logger::info("end   delete_project_command");
     x
 }

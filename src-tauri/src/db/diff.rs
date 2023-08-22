@@ -30,10 +30,10 @@ pub fn insert_snapshot_diff(conn: &SqliteConnection, snapshot_diff: &SnapshotDif
 
 #[cfg(test)]
 mod tests {
-    use crate::db::create_sqlite_connection;
     use crate::db::diff::{find_snapshot_diff, insert_snapshot_diff};
     use crate::db::project::insert_project;
     use crate::db::snapshot::insert_snapshot_summary;
+    use crate::db::{create_sqlite_connection, migrate_sqlite_if_missing};
     use crate::domain::diff::ColDiff::{Deleted, NoValue};
     use crate::domain::diff::{create_diff_id, SnapshotDiff, TableDiff};
     use crate::domain::project::Rdbms::Mysql;
@@ -54,6 +54,7 @@ mod tests {
     fn snapshot_diff() -> anyhow::Result<()> {
         // setup
 
+        migrate_sqlite_if_missing()?;
         let conn = create_sqlite_connection()?;
         diesel::sql_query("delete from projects").execute(&conn)?;
 
