@@ -12,30 +12,31 @@
 比較する dump データを 2 つ選択
 <img alt="image" src="doc/2-snapshots.png" width="70%"/>
 
-dump データの差分 ( マイグレーション実施 ~ 入会直後 )
+dump データの差分を確認 ( マイグレーション実施 ~ 入会直後 )
 <img alt="image" src="doc/3-diff1.png" width="70%"/>
 
-dump データの差分 ( API トークン生成 ~ 退会処理 )
+dump データの差分を確認 ( API トークン生成 ~ 退会処理 )
 <img alt="image" src="doc/4-diff2.png" width="70%"/>
 
 ## 使い方
 
 ### ダウンロード
 
-[Releases](https://github.com/suzuki-hoge/db-diff/releases) ページの Todo
+[Releases](https://github.com/suzuki-hoge/db-diff/releases) ページから最新バージョンをダウンロードしてください
 
-Windows は ~
-
-macOS は ~
-
-Linux は ~
+- Windows: `.msi`
+- macOS: `*.app.tar.gz`
+  - Intel 用ビルドですが ARM マシンでも Rosseta 2 で動作します
+- Ubuntu: `*.deb`
+- それ以外の Linux: `*.AppImage`
 
 ### データベースに接続
 
 初回利用時に dump を実施するデータベースの接続情報を作成してください
 <img alt="image" src="doc/5-project-input.png" width="70%"/>
 
-作成した接続情報や dump 結果は DB Diff アプリ本体に内包される SQLite データベースに保存されます
+作成した接続情報や dump 結果は SQLite データベースに保存されます  
+( この SQLite データベースのセットアップは不要です )
 
 ### サンプル
 
@@ -44,13 +45,17 @@ Linux は ~
 
 このサンプルプロジェクトは [こちら](https://github.com/suzuki-hoge/db-diff-sample) で入手できます
 
+### ワークスペース
+
+起動時に `~/.db-diff` が作成され、SQLite データベースとログファイルが作成されます
+
 ## 仕様
 
 ### ネットワーク
 
 現状接続できるデータベースは、DB Diff アプリを起動する PC が直接接続できるデータベースに限られます
 
-ローカル開発環境や VPN や SSH の Local Port Forward を用いて接続できる開発環境における利用を想定しています
+ローカル開発環境や、VPN や SSH の Local Port Forward を用いて接続できる開発環境における利用を想定しています
 
 ### 対応 RDBMS
 
@@ -80,8 +85,12 @@ Linux は ~
 
 1 オンラインリクエストの差分を緻密に確認する用途を想定しています
 
-( α ) 暫定ページネーションを改善しカクつかないくらいにはする予定
-
 ### バージョンについて
 
 今後のメジャーバージョンアップによっては、過去に dump したデータは新しいバージョンでは使用できなくなる可能性があります
+
+### 機能追加予定
+
+- 暫定ページネーションを改善しカクつかないくらいにはする
+- dump するテーブルの除外設定をできるようにする
+- dump するレコードのソート順と行数上限を設定できるようにする
