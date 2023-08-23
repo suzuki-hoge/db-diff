@@ -1,4 +1,4 @@
-use std::fs::{create_dir_all, OpenOptions};
+use std::fs::{create_dir_all, remove_dir_all, OpenOptions};
 use std::io::{stdout, Write};
 
 use anyhow::anyhow;
@@ -16,32 +16,36 @@ pub mod snapshot;
 pub fn migrate_sqlite_if_missing() -> anyhow::Result<()> {
     setup_dir()?;
 
-    let db = workspace_path("database-v0.0.0.sqlite")?;
+    let db = workspace_path("database-v0.1.0.sqlite")?;
 
     if !db.exists() {
-        logger::info("create database [ ~/.db-diff/database-v0.0.0.sqlite ]");
+        logger::info("create database [ ~/.db-diff/database-v0.1.0.sqlite ]");
 
         let conn = create_sqlite_connection()?;
 
-        logger::info("put migration queries [ ~/.db-diff/migrations ]");
+        logger::info("put ( or replace ) migration queries [ ~/.db-diff/migrations ]");
+
+        let migrations_dir = workspace_path("migrations")?;
+
+        remove_dir_all(&migrations_dir)?;
 
         put_migrations("up", include_bytes!("../../migrations/tables/up.sql"))?;
         put_migrations("down", include_bytes!("../../migrations/tables/down.sql"))?;
 
         logger::info("migrate database");
 
-        run_pending_migrations_in_directory(&conn, &workspace_path("migrations")?, &mut stdout())?;
+        run_pending_migrations_in_directory(&conn, &migrations_dir, &mut stdout())?;
 
         logger::info("migrate ok");
     } else {
-        logger::info("found database [ ~/.db-diff/database-v0.0.0.sqlite ]");
+        logger::info("found database [ ~/.db-diff/database-v0.1.0.sqlite ]");
     }
 
     Ok(())
 }
 
 pub fn create_sqlite_connection() -> anyhow::Result<SqliteConnection> {
-    let db = workspace_path("database-v0.0.0.sqlite")?;
+    let db = workspace_path("database-v0.1.0.sqlite")?;
 
     SqliteConnection::establish(db.to_str().unwrap()).map_err(|e| anyhow!(e))
 }
