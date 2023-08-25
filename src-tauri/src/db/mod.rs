@@ -27,10 +27,10 @@ pub fn migrate_sqlite_if_missing() -> anyhow::Result<()> {
 
         let migrations_dir = workspace_path("migrations")?;
 
-        remove_dir_all(&migrations_dir)?;
+        let _ = remove_dir_all(&migrations_dir);
 
-        put_migrations("up", include_bytes!("../../migrations/tables/up.sql"))?;
-        put_migrations("down", include_bytes!("../../migrations/tables/down.sql"))?;
+        put_migrations("up", get_up_bytes())?;
+        put_migrations("down", get_down_bytes())?;
 
         logger::info("migrate database");
 
@@ -64,12 +64,32 @@ fn setup_dir() -> anyhow::Result<()> {
 }
 
 fn put_migrations(kind: &str, bytes: &[u8]) -> anyhow::Result<()> {
-    let dir = workspace_path("migrations/tables")?;
-    create_dir_all(dir)?;
+    let dir = workspace_path("migrations")?.join("tables");
+    create_dir_all(&dir)?;
 
-    let path = workspace_path(&format!("migrations/tables/{kind}.sql"))?;
+    let path = dir.join(format!("{kind}.sql"));
     let mut file = OpenOptions::new().append(true).create(true).open(path)?;
 
     file.write_all(bytes).map_err(|e| anyhow!(e))?;
     file.flush().map_err(|e| anyhow!(e))
+}
+
+#[cfg(unix)]
+fn get_up_bytes() -> &'static [u8] {
+    include_bytes!("../../migrations/tables/up.sql")
+}
+
+#[cfg(unix)]
+fn get_down_bytes() -> &'static [u8] {
+    include_bytes!("../../migrations/tables/down.sql")
+}
+
+#[cfg(windows)]
+fn get_up_bytes() -> &'static [u8] {
+    include_bytes!("..\\..\\migrations\\tables\\up.sql")
+}
+
+#[cfg(windows)]
+fn get_down_bytes() -> &'static [u8] {
+    include_bytes!("..\\..\\migrations\\tables\\down.sql")
 }
