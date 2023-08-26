@@ -20,7 +20,7 @@ export const SnapshotCreatePage: FC = () => {
       })
   }, [location])
 
-  const dump: (snapshotName: string, dumpConfigs: DumpConfig[]) => void = (snapshotName) => {
+  const dump: (snapshotName: string, dumpConfigs: DumpConfig[]) => void = (snapshotName: string, dumpConfigs: DumpConfig[]) => {
     toast
       .promise(
         invoke('dump_snapshot_command', { snapshotName, dumpConfigJsons: dumpConfigs }),
@@ -35,5 +35,5 @@ export const SnapshotCreatePage: FC = () => {
       })
   }
 
-  return <SnapshotCreate dumpConfigs={dumpConfigs} dump={dump} />
+  return dumpConfigs.length !== 0 ? <SnapshotCreate dumpConfigs={dumpConfigs} dump={dump} /> : <></>
 }

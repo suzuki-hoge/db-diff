@@ -29,7 +29,13 @@ impl DumpConfig {
     fn set_value(&self, value: &str) -> Self {
         Self { table_name: self.table_name.clone(), col_names: self.col_names.clone(), value: value.to_string() }
     }
+
+    pub fn sort(mut dump_configs: Vec<Self>) -> Vec<Self> {
+        dump_configs.sort_by_key(|dump_config| dump_config.table_name.clone());
+        dump_configs
+    }
 }
+
 #[cfg(test)]
 mod tests {
     use crate::domain::dump_config::DumpConfig;

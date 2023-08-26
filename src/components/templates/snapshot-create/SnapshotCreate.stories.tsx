@@ -16,6 +16,10 @@ type Story = StoryObj<typeof meta>
 
 export const Component: Story = {
   args: {
+    dumpConfigs: [
+      { tableName: 'groups', colNames: ['id', 'name', 'created_at', 'updated_at'], value: 'limited' },
+      { tableName: 'users', colNames: ['id', 'name', 'created_at', 'updated_at'], value: 'updated_at' },
+    ],
     dump: console.log,
   },
 }

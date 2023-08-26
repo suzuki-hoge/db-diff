@@ -146,6 +146,7 @@ fn parse_col_value(col_schema: &ColSchema, value: String) -> ColValue {
 #[rustfmt::skip]
 mod adapter_tests {
     use itertools::Itertools;
+    use crate::domain::dump_config::DumpConfig;
 
     use crate::domain::project::{create_project_id, Project};
     use crate::domain::project::Rdbms::Mysql;
@@ -171,7 +172,7 @@ mod adapter_tests {
         adapter.conn.prep_exec("create table 01_number_01_signed ( id int auto_increment, col_tinyint tinyint, col_smallint smallint, col_mediumint mediumint, col_int int, col_bigint bigint, primary key (id) )", ())?;
         adapter.conn.prep_exec("create table 11_string_01_char ( id int auto_increment, col_char char(3), col_varchar varchar(3), primary key (id) )", ())?;
 
-        let sut = adapter.get_dump_configs()?;
+        let sut = DumpConfig::sort(adapter.get_dump_configs()?);
 
         assert_eq!("01_number_01_signed", sut[0].table_name);
         assert_eq!("id, col_tinyint, col_smallint, col_mediumint, col_int, col_bigint", sut[0].col_names.join(", "));

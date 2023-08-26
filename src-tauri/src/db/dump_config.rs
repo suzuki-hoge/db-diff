@@ -15,7 +15,7 @@ pub fn find_recent_dump_configs(conn: &SqliteConnection, project_id: &ProjectId)
         .order(schema::dump_configs::create_at.desc())
         .load(conn)
         .map_err(|e| anyhow!(e))?;
-    Ok(rows.into_iter().next().map(|data| serde_json::from_str(&data).unwrap()))
+    Ok(rows.into_iter().next().map(|data| DumpConfig::sort(serde_json::from_str(&data).unwrap())))
 }
 
 pub fn find_dump_config(conn: &SqliteConnection, snapshot_id: &SnapshotId) -> anyhow::Result<Vec<DumpConfig>> {
@@ -24,7 +24,7 @@ pub fn find_dump_config(conn: &SqliteConnection, snapshot_id: &SnapshotId) -> an
         .filter(schema::dump_configs::snapshot_id.eq(&snapshot_id))
         .load(conn)
         .map_err(|e| anyhow!(e))?;
-    Ok(rows.into_iter().next().map(|data| serde_json::from_str(&data).unwrap()).unwrap())
+    Ok(rows.into_iter().next().map(|data| DumpConfig::sort(serde_json::from_str(&data).unwrap())).unwrap())
 }
 
 pub fn insert_dump_configs(
@@ -39,7 +39,7 @@ pub fn insert_dump_configs(
             schema::dump_configs::snapshot_id.eq(snapshot_id),
             schema::dump_configs::project_id.eq(project_id),
             schema::dump_configs::data.eq(data),
-            schema::dump_configs::create_at.eq(Local::now().format("%F %T.%.6f").to_string()),
+            schema::dump_configs::create_at.eq(Local::now().format("%F %T%.6f").to_string()),
         ))
         .execute(conn)
         .map_err(|e| anyhow!(e))?;

@@ -21,6 +21,10 @@ export const Component: Story = {
       snapshotName: '初期状態',
       createAt: '2023/01/01 12:34:56',
     },
+    dumpConfigs: [
+      { tableName: 'groups', colNames: ['id', 'name', 'created_at', 'updated_at'], value: 'limited' },
+      { tableName: 'users', colNames: ['id', 'name', 'created_at', 'updated_at'], value: 'updated_at' },
+    ],
     update: console.log,
   },
 }

@@ -14,7 +14,7 @@ export const SnapshotUpdatePage: FC = () => {
   const snapshotSummary = location.state as SnapshotSummary
 
   useEffect(() => {
-    invoke<DumpConfig[]>('get_snapshot_dump_config_command', { snapshotId: snapshotSummary.snapshotId })
+    invoke<DumpConfig[]>('find_dump_configs_command', { snapshotId: snapshotSummary.snapshotId })
       .then((data) => {
         setDumpConfigs(data)
       })
@@ -34,5 +34,9 @@ export const SnapshotUpdatePage: FC = () => {
       })
   }
 
-  return snapshotSummary !== undefined ? <SnapshotUpdate snapshotSummary={snapshotSummary} dumpConfigs={dumpConfigs} update={update} /> : <></>
+  return snapshotSummary !== undefined && dumpConfigs.length !== 0 ? (
+    <SnapshotUpdate snapshotSummary={snapshotSummary} dumpConfigs={dumpConfigs} update={update} />
+  ) : (
+    <></>
+  )
 }

@@ -17,6 +17,7 @@ export const Active: Story = {
     name: 'rdbms',
     currentValue: 'MySQL',
     value: 'MySQL',
+    displayValue: 'MySQL',
   },
 }
 
@@ -25,5 +26,6 @@ export const Inactive: Story = {
     name: 'rdbms',
     currentValue: 'PostgreSQL',
     value: 'MySQL',
+    displayValue: 'MySQL',
   },
 }

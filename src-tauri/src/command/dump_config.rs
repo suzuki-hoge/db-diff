@@ -49,7 +49,7 @@ pub fn find_recent_dump_configs_command(app_state: State<'_, AppState>) -> Resul
     };
 
     logger::info("end   find_recent_dump_configs_command");
-    Ok(x.into_iter().map(DumpConfigJson::from).collect_vec())
+    Ok(DumpConfig::sort(x).into_iter().map(DumpConfigJson::from).collect_vec())
 }
 
 #[tauri::command]

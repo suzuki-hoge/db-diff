@@ -14,11 +14,9 @@ type Story = StoryObj<typeof meta>
 
 export const InputIgnore: Story = {
   args: {
-    dumpConfig: {
-      tableName: 'users',
-      colNames: ['id', 'name', 'age', 'created_at', 'updated_at'],
-      value: 'ignore',
-    },
+    tableName: 'users',
+    colNames: ['id', 'name', 'age', 'created_at', 'updated_at'],
+    value: 'ignore',
     input: true,
     onChange: console.log,
   },
@@ -26,11 +24,9 @@ export const InputIgnore: Story = {
 
 export const InputOrdered: Story = {
   args: {
-    dumpConfig: {
-      tableName: 'users',
-      colNames: ['id', 'name', 'age', 'created_at', 'updated_at'],
-      value: 'updated_at',
-    },
+    tableName: 'users',
+    colNames: ['id', 'name', 'age', 'created_at', 'updated_at'],
+    value: 'updated_at',
     input: true,
     onChange: console.log,
   },
@@ -38,11 +34,9 @@ export const InputOrdered: Story = {
 
 export const ViewOrdered: Story = {
   args: {
-    dumpConfig: {
-      tableName: 'users',
-      colNames: ['id', 'name', 'age', 'created_at', 'updated_at'],
-      value: 'updated_at',
-    },
+    tableName: 'users',
+    colNames: ['id', 'name', 'age', 'created_at', 'updated_at'],
+    value: 'updated_at',
     input: false,
     onChange: console.log,
   },
