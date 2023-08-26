@@ -67,41 +67,37 @@ impl TargetDbAdapter for TargetDbMysql80 {
     }
 
     fn get_col_schemata(&mut self, table_schema: &TableSchema) -> anyhow::Result<ColSchemata> {
-        let query = format!("select column_name, data_type, column_type from information_schema.columns where table_schema = '{}' and table_name = '{}' and column_key = 'PRI' order by ordinal_position", self.schema, table_schema.table_name);
+        let query = format!("select column_name, data_type, column_type, column_key from information_schema.columns where table_schema = '{}' and table_name = '{}' order by ordinal_position", self.schema, table_schema.table_name);
 
         logger::info(format!("query: {}", &query));
 
-        let unique_cols: Vec<ColSchema> = self
-            .conn
-            .query(query)
-            .map(|result| {
-                result
-                    .map(|x| x.unwrap())
-                    .map(|row| {
-                        let (col_name, data_type, col_type) = from_row(row);
-                        ColSchema { col_name, data_type, col_type }
-                    })
-                    .collect_vec()
+        let rows = self.conn.query(query).unwrap().map(|row| row.unwrap()).collect_vec();
+
+        let unique_cols = rows
+            .clone()
+            .into_iter()
+            .flat_map(|row| {
+                let (col_name, data_type, col_type, col_key) = from_row::<(String, String, String, String)>(row);
+                if &col_key == "PRI" {
+                    vec![ColSchema { col_name, data_type, col_type }]
+                } else {
+                    vec![]
+                }
             })
-            .map_err(|e| anyhow!(e))?;
+            .collect_vec();
 
-        let query = format!("select column_name, data_type, column_type from information_schema.columns where table_schema = '{}' and table_name = '{}' and column_key != 'PRI' order by ordinal_position", self.schema, table_schema.table_name);
-
-        logger::info(format!("query: {}", &query));
-
-        let cols: Vec<ColSchema> = self
-            .conn
-            .query(query)
-            .map(|result| {
-                result
-                    .map(|x| x.unwrap())
-                    .map(|row| {
-                        let (col_name, data_type, col_type) = from_row(row);
-                        ColSchema { col_name, data_type, col_type }
-                    })
-                    .collect_vec()
+        let cols = rows
+            
+            .into_iter()
+            .flat_map(|row| {
+                let (col_name, data_type, col_type, col_key) = from_row::<(String, String, String, String)>(row);
+                if &col_key != "PRI" {
+                    vec![ColSchema { col_name, data_type, col_type }]
+                } else {
+                    vec![]
+                }
             })
-            .map_err(|e| anyhow!(e))?;
+            .collect_vec();
 
         Ok(ColSchemata::new(unique_cols, cols))
     }
