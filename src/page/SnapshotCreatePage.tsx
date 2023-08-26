@@ -11,7 +11,7 @@ export const SnapshotCreatePage: FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    invoke<DumpConfig[]>('get_project_dump_config_command')
+    invoke<DumpConfig[]>('find_recent_dump_configs_command')
       .then((data) => {
         setDumpConfigs(data)
       })
@@ -20,10 +20,10 @@ export const SnapshotCreatePage: FC = () => {
       })
   }, [location])
 
-  const dump: (snapshotName: string) => void = (snapshotName) => {
+  const dump: (snapshotName: string, dumpConfigs: DumpConfig[]) => void = (snapshotName) => {
     toast
       .promise(
-        invoke('dump_snapshot_command', { snapshotName }),
+        invoke('dump_snapshot_command', { snapshotName, dumpConfigJsons: dumpConfigs }),
         { loading: 'スナップショットを作成中...', success: '保存しました', error: 'エラーが発生しました' },
         { style: { minWidth: '200px' } }
       )

@@ -24,6 +24,17 @@ create table snapshot_summaries
     foreign key (project_id) references projects (project_id) on delete cascade
 );
 
+create table dump_configs
+(
+    snapshot_id text not null,
+    project_id  text not null,
+    data        text not null,
+    create_at   text not null,
+    primary key (snapshot_id),
+    foreign key (snapshot_id) references snapshot_summaries (snapshot_id) on delete cascade,
+    foreign key (project_id) references projects (project_id) on delete cascade
+);
+
 create table table_snapshots
 (
     snapshot_id text not null,
@@ -46,7 +57,9 @@ create table snapshot_diffs
 );
 
 insert into projects (project_id, name, color, rdbms, user, password, host, port, `schema`)
-values ('D07231B4-D5CC-4E25-AF01-2D5F9DB59980', 'Sample 1', '#c2e0c6', 'MySQL', 'user', 'password', '127.0.0.1', '13306',
+values ('D07231B4-D5CC-4E25-AF01-2D5F9DB59980', 'Sample 1', '#c2e0c6', 'MySQL', 'user', 'password', '127.0.0.1',
+        '13306',
         'sample1'),
-       ('0BB817C5-5045-4668-8385-0E0B6625FE0D', 'Sample 2', '#c5def5', 'MySQL', 'user', 'password', '127.0.0.1', '23306',
+       ('0BB817C5-5045-4668-8385-0E0B6625FE0D', 'Sample 2', '#c5def5', 'MySQL', 'user', 'password', '127.0.0.1',
+        '23306',
         'sample2');

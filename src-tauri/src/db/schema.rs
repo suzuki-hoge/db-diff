@@ -40,7 +40,18 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    dump_configs (project_id) {
+        snapshot_id -> Text,
+        project_id -> Text,
+        data -> Text,
+        create_at -> Text,
+    }
+}
+
 diesel::joinable!(snapshot_summaries -> projects (project_id));
 diesel::joinable!(table_snapshots -> snapshot_summaries (snapshot_id));
+diesel::joinable!(dump_configs -> snapshot_summaries (snapshot_id));
+diesel::joinable!(dump_configs -> projects (project_id));
 
 diesel::allow_tables_to_appear_in_same_query!(projects, snapshot_diffs, snapshot_summaries, table_snapshots,);

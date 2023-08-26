@@ -9,8 +9,9 @@ use crate::logger;
 use crate::workspace::{workspace_dir, workspace_path};
 
 pub mod diff;
+pub mod dump_config;
 pub mod project;
-mod schema;
+pub mod schema;
 pub mod snapshot;
 
 pub fn migrate_sqlite_if_missing() -> anyhow::Result<()> {

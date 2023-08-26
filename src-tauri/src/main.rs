@@ -22,6 +22,8 @@ fn main() -> anyhow::Result<()> {
             command::project::update_project_command,
             command::project::delete_project_command,
             command::project::select_project_command,
+            command::dump_config::find_recent_dump_configs_command,
+            command::dump_config::find_dump_configs_command,
             command::snapshot::all_snapshot_summaries_command,
             command::snapshot::update_snapshot_summary_command,
             command::snapshot::delete_snapshot_summary_command,

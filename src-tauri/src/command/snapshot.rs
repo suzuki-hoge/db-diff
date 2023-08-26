@@ -2,7 +2,9 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
+use crate::command::dump_config::DumpConfigJson;
 use crate::command::state::AppState;
+use crate::db::dump_config::insert_dump_configs;
 use crate::db::project::all_projects;
 use crate::db::snapshot::{all_snapshot_summaries, delete_snapshot_summary, update_snapshot_summary};
 use crate::domain::snapshot::{SnapshotId, SnapshotName, SnapshotSummary};
@@ -65,7 +67,11 @@ pub fn delete_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_
 }
 
 #[tauri::command]
-pub fn dump_snapshot_command(app_state: State<'_, AppState>, snapshot_name: SnapshotName) -> Result<(), String> {
+pub fn dump_snapshot_command(
+    app_state: State<'_, AppState>,
+    snapshot_name: SnapshotName,
+    dump_config_jsons: Vec<DumpConfigJson>,
+) -> Result<(), String> {
     logger::info("start dump_snapshot_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -75,7 +81,15 @@ pub fn dump_snapshot_command(app_state: State<'_, AppState>, snapshot_name: Snap
     let projects = all_projects(&conn).map_err(|e| e.to_string())?;
     let project = projects.iter().find(|project| &project.project_id == project_id).unwrap();
 
-    dump(&conn, project, snapshot_name).map_err(|e| e.to_string())?;
+    let snapshot_id = dump(&conn, project, snapshot_name).map_err(|e| e.to_string())?;
+
+    insert_dump_configs(
+        &conn,
+        project_id,
+        &snapshot_id,
+        &dump_config_jsons.into_iter().map(|dump_config_json| dump_config_json.into()).collect_vec(),
+    )
+    .map_err(|e| e.to_string())?;
 
     logger::info("end   dump_snapshot_command");
 

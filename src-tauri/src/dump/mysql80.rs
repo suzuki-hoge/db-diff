@@ -1,10 +1,13 @@
+use std::collections::HashMap;
+
 use anyhow::anyhow;
 use itertools::Itertools;
 use mysql::Value::NULL;
 use mysql::{from_row, from_value, Conn, Value};
 
+use crate::domain::dump_config::DumpConfig;
 use crate::domain::project::Project;
-use crate::domain::schema::{ColSchema, ColSchemata, TableSchema};
+use crate::domain::schema::{ColName, ColSchema, ColSchemata, TableName, TableSchema};
 use crate::domain::snapshot::ColValue::*;
 use crate::domain::snapshot::{ColValue, RowSnapshot};
 use crate::dump::adapter::TargetDbAdapter;
@@ -24,6 +27,25 @@ impl TargetDbMysql80 {
 }
 
 impl TargetDbAdapter for TargetDbMysql80 {
+    fn get_dump_configs(&mut self) -> anyhow::Result<Vec<DumpConfig>> {
+        let mut map: HashMap<TableName, Vec<ColName>> = HashMap::new();
+
+        let result = self
+            .conn
+            .query(format!(
+                "select table_name, column_name from information_schema.columns where table_schema = '{}' order by table_name, ordinal_position",
+                self.schema
+            ))
+            .map_err(|e| anyhow!(e))?;
+
+        for row in result.map(|x| x.unwrap()) {
+            let (table_name, col_name) = from_row::<(TableName, ColName)>(row);
+            map.entry(table_name).or_default().push(col_name);
+        }
+
+        Ok(map.into_iter().map(|(k, v)| DumpConfig::new(k, v, "limited".to_string())).collect_vec())
+    }
+
     fn get_table_schemata(&mut self) -> anyhow::Result<Vec<TableSchema>> {
         self.conn
             .query(format!("select table_name from information_schema.tables where table_schema = '{}' order by table_name", self.schema))
@@ -136,7 +158,34 @@ mod adapter_tests {
     }
 
     #[test]
-    fn test() -> anyhow::Result<()> {
+    fn get_dump_configs() -> anyhow::Result<()> {
+        let project = Project::new(&create_project_id(), "test-project", "red", Mysql, "user","password","127.0.0.1","19001","testdata");
+
+        let mut adapter = TargetDbMysql80::new(&project)?;
+
+        // drop all
+        for table_schema in adapter.get_table_schemata()? {
+            adapter.conn.prep_exec(format!("drop table {}", table_schema.table_name), ())?;
+        }
+
+        adapter.conn.prep_exec("create table 01_number_01_signed ( id int auto_increment, col_tinyint tinyint, col_smallint smallint, col_mediumint mediumint, col_int int, col_bigint bigint, primary key (id) )", ())?;
+        adapter.conn.prep_exec("create table 11_string_01_char ( id int auto_increment, col_char char(3), col_varchar varchar(3), primary key (id) )", ())?;
+
+        let sut = adapter.get_dump_configs()?;
+
+        assert_eq!("01_number_01_signed", sut[0].table_name);
+        assert_eq!("id, col_tinyint, col_smallint, col_mediumint, col_int, col_bigint", sut[0].col_names.join(", "));
+        assert_eq!("limited", sut[0].value);
+
+        assert_eq!("11_string_01_char", sut[1].table_name);
+        assert_eq!("id, col_char, col_varchar", sut[1].col_names.join(", "));
+        assert_eq!("limited", sut[1].value);
+
+        Ok(())
+    }
+    
+    #[test]
+    fn dump() -> anyhow::Result<()> {
         let project = Project::new(&create_project_id(), "test-project", "red", Mysql, "user","password","127.0.0.1","19001","testdata");
 
         let mut adapter = TargetDbMysql80::new(&project)?;
