@@ -87,7 +87,6 @@ impl TargetDbAdapter for TargetDbMysql80 {
             .collect_vec();
 
         let cols = rows
-            
             .into_iter()
             .flat_map(|row| {
                 let (col_name, data_type, col_type, col_key) = from_row::<(String, String, String, String)>(row);

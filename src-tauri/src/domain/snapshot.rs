@@ -51,10 +51,6 @@ impl TableSnapshot {
         Self { table_name: table_name.clone(), primary_col_name, col_names, hash, row_snapshots }
     }
 
-    pub fn get_primary_col_values(&self) -> Vec<&PrimaryColValues> {
-        self.row_snapshots.iter().map(|row_snapshot| &row_snapshot.primary_col_values).collect()
-    }
-
     pub fn merge_primary_col_values<'a>(&'a self, other: &'a Self) -> Vec<&'a PrimaryColValues> {
         let mut set = BTreeSet::new();
 
