@@ -11,6 +11,7 @@ use crate::domain::schema::{ColName, ColSchema, ColSchemata, TableName, TableSch
 use crate::domain::snapshot::ColValue::*;
 use crate::domain::snapshot::{ColValue, RowSnapshot};
 use crate::dump::adapter::TargetDbAdapter;
+use crate::logger;
 
 pub struct TargetDbMysql80 {
     conn: Conn,
@@ -30,13 +31,13 @@ impl TargetDbAdapter for TargetDbMysql80 {
     fn get_dump_configs(&mut self) -> anyhow::Result<Vec<DumpConfig>> {
         let mut map: HashMap<TableName, Vec<ColName>> = HashMap::new();
 
-        let result = self
-            .conn
-            .query(format!(
-                "select table_name, column_name from information_schema.columns where table_schema = '{}' order by table_name, ordinal_position",
-                self.schema
-            ))
-            .map_err(|e| anyhow!(e))?;
+        let query = format!(
+            "select table_name, column_name from information_schema.columns where table_schema = '{}' order by table_name, ordinal_position",
+            self.schema
+        );
+        logger::info(format!("query: {}", &query));
+
+        let result = self.conn.query(query).map_err(|e| anyhow!(e))?;
 
         for row in result.map(|x| x.unwrap()) {
             let (table_name, col_name) = from_row::<(TableName, ColName)>(row);
@@ -47,8 +48,12 @@ impl TargetDbAdapter for TargetDbMysql80 {
     }
 
     fn get_table_schemata(&mut self) -> anyhow::Result<Vec<TableSchema>> {
+        let query = format!("select table_name from information_schema.tables where table_schema = '{}' order by table_name", self.schema);
+
+        logger::info(format!("query: {}", &query));
+
         self.conn
-            .query(format!("select table_name from information_schema.tables where table_schema = '{}' order by table_name", self.schema))
+            .query(query)
             .map(|result| {
                 result
                     .map(|x| x.unwrap())
@@ -62,20 +67,13 @@ impl TargetDbAdapter for TargetDbMysql80 {
     }
 
     fn get_col_schemata(&mut self, table_schema: &TableSchema) -> anyhow::Result<ColSchemata> {
-        let unique_cols: Vec<ColSchema> = self.conn.query(
-            format!("select column_name, data_type, column_type from information_schema.columns where table_schema = '{}' and table_name = '{}' and column_key = 'PRI' order by ordinal_position", self.schema, table_schema.table_name))
-            .map(|result| {
-                result
-                    .map(|x| x.unwrap())
-                    .map(|row| {
-                        let (col_name, data_type, col_type) = from_row(row);
-                        ColSchema { col_name, data_type, col_type }
-                    })
-                    .collect_vec()
-            }).map_err(|e| anyhow!(e))?;
+        let query = format!("select column_name, data_type, column_type from information_schema.columns where table_schema = '{}' and table_name = '{}' and column_key = 'PRI' order by ordinal_position", self.schema, table_schema.table_name);
 
-        let cols: Vec<ColSchema> = self.conn.query(
-            format!("select column_name, data_type, column_type from information_schema.columns where table_schema = '{}' and table_name = '{}' and column_key != 'PRI' order by ordinal_position", self.schema, table_schema.table_name))
+        logger::info(format!("query: {}", &query));
+
+        let unique_cols: Vec<ColSchema> = self
+            .conn
+            .query(query)
             .map(|result| {
                 result
                     .map(|x| x.unwrap())
@@ -84,16 +82,46 @@ impl TargetDbAdapter for TargetDbMysql80 {
                         ColSchema { col_name, data_type, col_type }
                     })
                     .collect_vec()
-            }).map_err(|e| anyhow!(e))?;
+            })
+            .map_err(|e| anyhow!(e))?;
+
+        let query = format!("select column_name, data_type, column_type from information_schema.columns where table_schema = '{}' and table_name = '{}' and column_key != 'PRI' order by ordinal_position", self.schema, table_schema.table_name);
+
+        logger::info(format!("query: {}", &query));
+
+        let cols: Vec<ColSchema> = self
+            .conn
+            .query(query)
+            .map(|result| {
+                result
+                    .map(|x| x.unwrap())
+                    .map(|row| {
+                        let (col_name, data_type, col_type) = from_row(row);
+                        ColSchema { col_name, data_type, col_type }
+                    })
+                    .collect_vec()
+            })
+            .map_err(|e| anyhow!(e))?;
 
         Ok(ColSchemata::new(unique_cols, cols))
     }
 
-    fn get_row_snapshots(&mut self, table_schema: &TableSchema, col_schemata: &ColSchemata) -> anyhow::Result<Vec<RowSnapshot>> {
+    fn get_row_snapshots(
+        &mut self,
+        table_schema: &TableSchema,
+        col_schemata: &ColSchemata,
+        dump_config_value: &str,
+    ) -> anyhow::Result<Vec<RowSnapshot>> {
         let all_cols = col_schemata.get_all_col_refs();
 
+        let col_names = all_cols.iter().map(|col| as_select_col(col)).join(",");
+        let order_by = if dump_config_value == "limited" { "".to_string() } else { format!("order by {dump_config_value}") };
+        let query = format!("select {} from `{}` {} limit 1000", col_names, table_schema.table_name, order_by);
+
+        logger::info(format!("query: {}", &query));
+
         self.conn
-            .query(format!("select {} from `{}`", all_cols.iter().map(|col| as_select_col(col)).join(","), table_schema.table_name))
+            .query(query)
             .map(|result| {
                 result
                     .map(|x| x.unwrap())
@@ -146,8 +174,8 @@ fn parse_col_value(col_schema: &ColSchema, value: String) -> ColValue {
 #[rustfmt::skip]
 mod adapter_tests {
     use itertools::Itertools;
-    use crate::domain::dump_config::DumpConfig;
 
+    use crate::domain::dump_config::DumpConfig;
     use crate::domain::project::{create_project_id, Project};
     use crate::domain::project::Rdbms::Mysql;
     use crate::domain::snapshot::ColValue::*;
@@ -285,7 +313,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[0], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[0], &col_schemata, "limited")?;
 
             assert_eq!(vec![SimpleNumber(s("127")),  SimpleNumber(s("32767")),  SimpleNumber(s("8388607")),  SimpleNumber(s("2147483647")),  SimpleNumber(s("9223372036854775807"))],  row_snapshots[0].col_values);
             assert_eq!(vec![SimpleNumber(s("-128")), SimpleNumber(s("-32768")), SimpleNumber(s("-8388608")), SimpleNumber(s("-2147483648")), SimpleNumber(s("-9223372036854775808"))], row_snapshots[1].col_values);
@@ -299,7 +327,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[1], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[1], &col_schemata, "limited")?;
 
             assert_eq!(vec![SimpleNumber(s("255")), SimpleNumber(s("65535")), SimpleNumber(s("16777215")), SimpleNumber(s("4294967295")), SimpleNumber(s("18446744073709551615"))], row_snapshots[0].col_values);
             assert_eq!(vec![SimpleNumber(s("0")),   SimpleNumber(s("0")),     SimpleNumber(s("0")),        SimpleNumber(s("0")),          SimpleNumber(s("0"))],                    row_snapshots[1].col_values);
@@ -313,7 +341,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_decimal", "col_numeric"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[2], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[2], &col_schemata, "limited")?;
 
             assert_eq!(vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99"))],  row_snapshots[0].col_values);
             assert_eq!(vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99"))], row_snapshots[1].col_values);
@@ -327,7 +355,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_float", "col_double"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[3], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[3], &col_schemata, "limited")?;
 
             assert_eq!(vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99"))],  row_snapshots[0].col_values);
             assert_eq!(vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99"))], row_snapshots[1].col_values);
@@ -341,7 +369,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_bit"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[4], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[4], &col_schemata, "limited")?;
 
             assert_eq!(vec![BitNumber(s("1000000000"))], row_snapshots[0].col_values);
             assert_eq!(vec![BitNumber(s("0"))],          row_snapshots[1].col_values);
@@ -357,7 +385,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_date"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[5], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[5], &col_schemata, "limited")?;
 
             assert_eq!(vec![DateString(s("2020-01-01"))], row_snapshots[0].col_values);
         }
@@ -370,7 +398,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_time"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[6], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[6], &col_schemata, "limited")?;
 
             assert_eq!(vec![DateString(s("00:00:00"))], row_snapshots[0].col_values);
         }
@@ -383,7 +411,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_datetime"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[7], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[7], &col_schemata, "limited")?;
 
             assert_eq!(vec![DateString(s("2020-01-01 00:00:00"))], row_snapshots[0].col_values);
         }
@@ -396,7 +424,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_timestamp"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[8], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[8], &col_schemata, "limited")?;
 
             assert_eq!(vec![DateString(s("2020-01-01 00:00:00"))], row_snapshots[0].col_values);
         }
@@ -409,7 +437,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_year"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[9], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[9], &col_schemata, "limited")?;
 
             assert_eq!(vec![DateString(s("2020"))], row_snapshots[0].col_values);
         }
@@ -422,7 +450,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_char", "col_varchar"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[10], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[10], &col_schemata, "limited")?;
 
             assert_eq!(vec![SimpleString(s("abc")), SimpleString(s("abc"))], row_snapshots[0].col_values);
             assert_eq!(vec![SimpleString(s("")), SimpleString(s(""))],       row_snapshots[1].col_values);
@@ -437,7 +465,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_binary", "col_varbinary"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[11], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[11], &col_schemata, "limited")?;
 
             assert_eq!(vec![BinaryString(s("abc")), BinaryString(s("abc"))], row_snapshots[0].col_values);
         }
@@ -450,7 +478,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_tinyblob", "col_blob", "col_mediumblob", "col_longblob"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[12], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[12], &col_schemata, "limited")?;
 
             assert_eq!(vec![BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc"))], row_snapshots[0].col_values);
         }
@@ -463,7 +491,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_tinytext", "col_text", "col_mediumtext", "col_longtext"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[13], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[13], &col_schemata, "limited")?;
 
             assert_eq!(vec![SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc"))], row_snapshots[0].col_values);
         }
@@ -476,7 +504,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_enum"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[14], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[14], &col_schemata, "limited")?;
 
             assert_eq!(vec![SimpleString(s("active"))],   row_snapshots[0].col_values);
             assert_eq!(vec![SimpleString(s("inactive"))], row_snapshots[1].col_values);
@@ -490,7 +518,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_set"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[15], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[15], &col_schemata, "limited")?;
 
             assert_eq!(vec![SimpleString(s("pc"))],       row_snapshots[0].col_values);
             assert_eq!(vec![SimpleString(s("phone"))],    row_snapshots[1].col_values);
@@ -506,7 +534,7 @@ mod adapter_tests {
             assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
             assert_eq!(vec!["col_json"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[16], &col_schemata)?;
+            let row_snapshots = adapter.get_row_snapshots(&table_schemata[16], &col_schemata, "limited")?;
 
             assert_eq!(vec![JsonString(s(r#"{"id": 1, "name": "John"}"#))],                       row_snapshots[0].col_values);
             assert_eq!(vec![JsonString(s(r#"[1, 2, "foo"]"#))],                                   row_snapshots[1].col_values);

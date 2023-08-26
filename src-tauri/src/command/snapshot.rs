@@ -81,15 +81,11 @@ pub fn dump_snapshot_command(
     let projects = all_projects(&conn).map_err(|e| e.to_string())?;
     let project = projects.iter().find(|project| &project.project_id == project_id).unwrap();
 
-    let snapshot_id = dump(&conn, project, snapshot_name).map_err(|e| e.to_string())?;
+    let dump_configs = dump_config_jsons.into_iter().map(|dump_config_json| dump_config_json.into()).collect_vec();
 
-    insert_dump_configs(
-        &conn,
-        project_id,
-        &snapshot_id,
-        &dump_config_jsons.into_iter().map(|dump_config_json| dump_config_json.into()).collect_vec(),
-    )
-    .map_err(|e| e.to_string())?;
+    let snapshot_id = dump(&conn, project, snapshot_name, &dump_configs).map_err(|e| e.to_string())?;
+
+    insert_dump_configs(&conn, project_id, &snapshot_id, &dump_configs).map_err(|e| e.to_string())?;
 
     logger::info("end   dump_snapshot_command");
 
