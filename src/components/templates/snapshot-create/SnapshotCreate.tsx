@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import { Header } from '../../molecules/header/Header'
 import { IconBack } from '../../atoms/icon-back/IconBack'
 import { SnapshotInput } from '../../organisms/snapshot-input/SnapshotInput'
+import { type DumpConfig } from '../../../types'
 
 interface Props {
+  dumpConfigs: DumpConfig[]
   dump: (snapshotName: string) => void
 }
 
@@ -26,7 +28,7 @@ export const SnapshotCreate: FC<Props> = (props) => {
         locals={<></>}
       />
       <div className={styles.component}>
-        <SnapshotInput dump={props.dump} />
+        <SnapshotInput dumpConfigs={props.dumpConfigs} dump={props.dump} />
       </div>
     </div>
   )

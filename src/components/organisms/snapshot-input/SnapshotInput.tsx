@@ -1,18 +1,21 @@
 import React, { type FC, useState } from 'react'
 import styles from './SnapshotInput.module.scss'
-import { type SnapshotSummary } from '../../../types'
+import { type DumpConfig, type SnapshotSummary } from '../../../types'
 import { Button } from '../../atoms/button/Button'
 import { LabeledInputText } from '../../molecules/labeled-input-text/LabeledInputText'
 import { z } from 'zod'
+import { DumpConfigInput } from '../dump-config-input/DumpConfigInput'
 
 interface Props {
   snapshotSummary?: SnapshotSummary
-  dump?: (snapshotName: string) => void
+  dumpConfigs: DumpConfig[]
+  dump?: (snapshotName: string, dumpConfigs: DumpConfig[]) => void
   update?: (snapshotSummary: SnapshotSummary) => void
 }
 
 export const SnapshotInput: FC<Props> = (props) => {
   const [snapshotName, setSnapshotName] = useState(props.snapshotSummary?.snapshotName ?? '')
+  const [dumpConfigValues, setDumpConfigValues] = useState(props.dumpConfigs.map((dumpConfig) => dumpConfig.value))
 
   const v = z.object({
     snapshotName: z.string().min(1, { message: '入力してください' }),
@@ -33,6 +36,23 @@ export const SnapshotInput: FC<Props> = (props) => {
           autoFocus={true}
           errors={errors.snapshotName}
         />
+      </div>
+      <div className={styles.configs}>
+        <span>Dump Configs</span>
+        {props.dumpConfigs.map((dumpConfig, i) => (
+          <DumpConfigInput
+            key={dumpConfig.tableName}
+            tableName={dumpConfig.tableName}
+            colNames={dumpConfig.colNames}
+            value={dumpConfigValues[i]}
+            input={props.snapshotSummary === undefined}
+            onChange={(value) => {
+              const vs = [...dumpConfigValues]
+              vs[i] = value
+              setDumpConfigValues(vs)
+            }}
+          />
+        ))}
       </div>
       <Button
         variant={'primary'}
@@ -55,7 +75,12 @@ export const SnapshotInput: FC<Props> = (props) => {
               }
             } else {
               if (props.dump != null) {
-                props.dump(snapshotName)
+                const dumpConfigs: DumpConfig[] = props.dumpConfigs.map((dumpConfig, i) => ({
+                  tableName: dumpConfig.tableName,
+                  colNames: dumpConfig.colNames,
+                  value: dumpConfigValues[i],
+                }))
+                props.dump(snapshotName, dumpConfigs)
               }
             }
           }

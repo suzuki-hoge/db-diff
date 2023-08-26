@@ -20,6 +20,13 @@ export interface SnapshotSummary {
   createAt: string
 }
 
+export interface DumpConfig {
+  tableName: string
+  colNames: string[]
+  value: DumpConfigValue
+}
+export type DumpConfigValue = 'limited' | 'ignore' | string
+
 export interface SnapshotDiff {
   diffId: string
   snapshotId1: string

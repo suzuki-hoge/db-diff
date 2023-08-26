@@ -5,6 +5,8 @@ interface Props {
   name: string
   currentValue: string
   value: string
+  displayValue: string
+  disabled?: boolean
   onChange: (value: string) => void
 }
 
@@ -14,15 +16,16 @@ export const RadioText: FC<Props> = (props) => {
       <input
         className={styles.radio}
         type="radio"
-        id={props.value}
+        id={`${props.name}-${props.value}`}
         name={props.name}
         value={props.value}
         checked={props.currentValue === props.value}
+        disabled={props.disabled}
         onChange={() => {
           props.onChange(props.value)
         }}
       />
-      <label htmlFor={props.value}>{props.value}</label>
+      <label htmlFor={`${props.name}-${props.value}`}>{props.displayValue}</label>
     </div>
   )
 }

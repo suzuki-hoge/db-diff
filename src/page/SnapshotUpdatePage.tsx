@@ -1,15 +1,27 @@
-import { type FC } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/tauri'
-import { type SnapshotSummary } from '../types'
+import { type DumpConfig, type SnapshotSummary } from '../types'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { SnapshotUpdate } from '../components/templates/snapshot-update/SnapshotUpdate'
 import { toast } from 'react-hot-toast'
 
 export const SnapshotUpdatePage: FC = () => {
+  const [dumpConfigs, setDumpConfigs] = useState<DumpConfig[]>([])
+
   const location = useLocation()
   const navigate = useNavigate()
 
   const snapshotSummary = location.state as SnapshotSummary
+
+  useEffect(() => {
+    invoke<DumpConfig[]>('get_snapshot_dump_config_command', { snapshotId: snapshotSummary.snapshotId })
+      .then((data) => {
+        setDumpConfigs(data)
+      })
+      .catch((e: string) => {
+        navigate('/error', { state: { message: e } })
+      })
+  }, [location])
 
   const update: (snapshotSummary: SnapshotSummary) => void = (snapshotSummary) => {
     invoke('update_snapshot_summary_command', { snapshotSummaryJson: snapshotSummary })
@@ -22,5 +34,5 @@ export const SnapshotUpdatePage: FC = () => {
       })
   }
 
-  return snapshotSummary !== undefined ? <SnapshotUpdate snapshotSummary={snapshotSummary} update={update} /> : <></>
+  return snapshotSummary !== undefined ? <SnapshotUpdate snapshotSummary={snapshotSummary} dumpConfigs={dumpConfigs} update={update} /> : <></>
 }
