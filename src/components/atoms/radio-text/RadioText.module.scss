@@ -22,12 +22,20 @@ label::before {
   left: 0;
 }
 
+label.disabled::before {
+  border: 1px solid gray;
+}
+
 label::after {
   background-color: #48f;
   opacity: 0;
   height: 12px;
   width: 12px;
   left: 3px;
+}
+
+label.disabled::after {
+  background-color: gray;
 }
 
 input:checked + label::after {

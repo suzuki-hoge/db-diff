@@ -29,3 +29,13 @@ export const Inactive: Story = {
     displayValue: 'MySQL',
   },
 }
+
+export const Disable: Story = {
+  args: {
+    name: 'rdbms',
+    currentValue: 'MySQL',
+    value: 'MySQL',
+    displayValue: 'MySQL',
+    disabled: true,
+  },
+}

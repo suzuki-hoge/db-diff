@@ -5,6 +5,7 @@ import { Button } from '../../atoms/button/Button'
 import { LabeledInputText } from '../../molecules/labeled-input-text/LabeledInputText'
 import { z } from 'zod'
 import { DumpConfigInput } from '../dump-config-input/DumpConfigInput'
+import { IconVExpand } from '../../atoms/icon-v-expand/IconVExpand'
 
 interface Props {
   snapshotSummary?: SnapshotSummary
@@ -24,6 +25,8 @@ export const SnapshotInput: FC<Props> = (props) => {
     snapshotName?: string[]
   }>({})
 
+  const [isExpanded, setIsExpanded] = useState(false)
+
   return (
     <div className={styles.component}>
       <div className={styles.grid}>
@@ -38,20 +41,31 @@ export const SnapshotInput: FC<Props> = (props) => {
         />
       </div>
       <div className={styles.configs}>
-        <span>Dump Configs</span>
-        {props.dumpConfigs.map((dumpConfig, i) => (
-          <DumpConfigInput
-            key={dumpConfig.tableName}
-            tableName={dumpConfig.tableName}
-            colNames={dumpConfig.colNames}
-            value={dumpConfigValues[i]}
-            input={props.snapshotSummary === undefined}
-            onChange={(value) => {
-              const vs = [...dumpConfigValues]
-              vs[i] = value
-              setDumpConfigValues(vs)
+        <span>
+          Dump Configs
+          <IconVExpand
+            variant={'medium'}
+            expanded={isExpanded}
+            onClick={() => {
+              setIsExpanded(!isExpanded)
             }}
           />
+        </span>
+        {props.dumpConfigs.map((dumpConfig, i) => (
+          <div key={dumpConfig.tableName} className={[styles.collapse, isExpanded ? '' : styles.hide].join(' ')}>
+            <DumpConfigInput
+              key={dumpConfig.tableName}
+              tableName={dumpConfig.tableName}
+              colNames={dumpConfig.colNames}
+              value={dumpConfigValues[i]}
+              input={props.snapshotSummary === undefined}
+              onChange={(value) => {
+                const vs = [...dumpConfigValues]
+                vs[i] = value
+                setDumpConfigValues(vs)
+              }}
+            />
+          </div>
         ))}
       </div>
       <Button

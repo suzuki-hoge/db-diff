@@ -25,7 +25,9 @@ export const RadioText: FC<Props> = (props) => {
           props.onChange(props.value)
         }}
       />
-      <label htmlFor={`${props.name}-${props.value}`}>{props.displayValue}</label>
+      <label className={props.disabled ?? false ? styles.disabled : ''} htmlFor={`${props.name}-${props.value}`}>
+        {props.displayValue}
+      </label>
     </div>
   )
 }

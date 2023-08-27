@@ -197,7 +197,7 @@ mod tests_create_snapshot_diff {
 
         let act = create_table_diff(None, Some(&table_snapshot2));
 
-        assert_eq!(true, act.empty());
+        assert!(act.empty());
     }
 
     #[test]
@@ -207,7 +207,7 @@ mod tests_create_snapshot_diff {
 
         let act = create_table_diff(Some(&table_snapshot1), None);
 
-        assert_eq!(true, act.empty());
+        assert!(act.empty());
     }
 
     #[test]

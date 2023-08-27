@@ -1,0 +1,36 @@
+.component {
+  position: relative;
+
+  select {
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-input);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  select::-ms-expand {
+    display: none;
+  }
+}
+
+.component::before {
+  border-bottom: 4.5px solid #48f;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  content: '';
+  position: absolute;
+  right: 7px;
+  top: 8px;
+  width: 0;
+}
+
+.component::after {
+  border-top: 4.5px solid #48f;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  content: '';
+  position: absolute;
+  right: 7px;
+  top: 16px;
+  width: 0;
+}

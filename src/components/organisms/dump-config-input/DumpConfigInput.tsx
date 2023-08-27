@@ -2,6 +2,7 @@ import React, { type FC, useState } from 'react'
 import styles from './DumpConfigInput.module.scss'
 import { LabeledRadioText } from '../../molecules/labeled-radio-text/LabeledRadioText'
 import { type DumpConfigValue } from '../../../types'
+import { Select } from '../../atoms/select/Select'
 
 interface Props {
   tableName: string
@@ -32,21 +33,31 @@ export const DumpConfigInput: FC<Props> = (props) => {
         }}
       />
       {isOrdered(props.value) && (
-        <p>
-          order by
-          <select
-            disabled={!props.input}
+        <p className={styles.text}>
+          <span>order by</span>
+          <Select
             defaultValue={selectedColName}
-            onChange={(e) => {
-              setSelectedColName(e.target.value)
-              props.onChange(e.target.value)
+            values={props.colNames}
+            onChange={(v) => {
+              setSelectedColName(v)
+              props.onChange(v)
             }}
-          >
-            {props.colNames.map((colName) => (
-              <option key={`${props.tableName}.${colName}`}>{colName}</option>
-            ))}
-          </select>
-          desc
+          />
+          {/* <div> */}
+          {/*  <select */}
+          {/*    disabled={!props.input} */}
+          {/*    defaultValue={selectedColName} */}
+          {/*    onChange={(e) => { */}
+          {/*      setSelectedColName(e.target.value) */}
+          {/*      props.onChange(e.target.value) */}
+          {/*    }} */}
+          {/*  > */}
+          {/*    {props.colNames.map((colName) => ( */}
+          {/*      <option key={`${props.tableName}.${colName}`}>{colName}</option> */}
+          {/*    ))} */}
+          {/*  </select> */}
+          {/* </div> */}
+          <span>desc</span>
         </p>
       )}
     </div>
