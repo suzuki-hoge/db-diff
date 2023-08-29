@@ -44,7 +44,7 @@ impl TargetDbAdapter for TargetDbMysql80 {
             map.entry(table_name).or_default().push(col_name);
         }
 
-        Ok(map.into_iter().map(|(k, v)| DumpConfig::new(k, v, "limited".to_string())).collect_vec())
+        Ok(map.into_iter().map(|(k, v)| DumpConfig::init(k, v)).collect_vec())
     }
 
     fn get_table_schemata(&mut self) -> anyhow::Result<Vec<TableSchema>> {
