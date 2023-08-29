@@ -24,8 +24,8 @@ export const DumpConfigInput: FC<Props> = (props) => {
       <LabeledRadioText
         label={props.tableName}
         value={isOrdered(props.value) ? 'ordered' : props.value}
-        values={['limited', 'ordered', 'ignore']}
-        displayValues={['Limited 1,000', 'Ordered 1,000', 'Ignore']}
+        values={['ordered', 'ignore', 'limited']}
+        displayValues={['Ordered 1,000', 'Ignore', 'Limited 1,000']}
         name={props.tableName}
         disabled={!props.input}
         onChange={(v) => {
@@ -43,20 +43,6 @@ export const DumpConfigInput: FC<Props> = (props) => {
               props.onChange(v)
             }}
           />
-          {/* <div> */}
-          {/*  <select */}
-          {/*    disabled={!props.input} */}
-          {/*    defaultValue={selectedColName} */}
-          {/*    onChange={(e) => { */}
-          {/*      setSelectedColName(e.target.value) */}
-          {/*      props.onChange(e.target.value) */}
-          {/*    }} */}
-          {/*  > */}
-          {/*    {props.colNames.map((colName) => ( */}
-          {/*      <option key={`${props.tableName}.${colName}`}>{colName}</option> */}
-          {/*    ))} */}
-          {/*  </select> */}
-          {/* </div> */}
           <span>desc</span>
         </p>
       )}

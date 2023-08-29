@@ -7,16 +7,24 @@
 ## デモ
 
 データベースの dump データを作成
-<img alt="image" src="doc/1-dump.png" width="70%"/>
+
+<img alt="image" src="doc/1-dump.png" width="100%"/>
 
 比較する dump データを 2 つ選択
-<img alt="image" src="doc/2-snapshots.png" width="70%"/>
 
-dump データの差分を確認 ( マイグレーション実施 ~ 入会直後 )
-<img alt="image" src="doc/3-diff1.png" width="70%"/>
+<img alt="image" src="doc/2-snapshots.png" width="100%"/>
 
-dump データの差分を確認 ( API トークン生成 ~ 退会処理 )
-<img alt="image" src="doc/4-diff2.png" width="70%"/>
+入会処理による差分を確認 ( マイグレーション実施 ~ 入会処理 )
+
+<img alt="image" src="doc/3-diff1.png" width="100%"/>
+
+メッセージ送信による差分を確認 ( API トークン生成 ~ メッセージ送信 )
+
+<img alt="image" src="doc/4-diff2.png" width="100%"/>
+
+退会処理による差分を確認 ( メッセージ送信 ~ 退会処理 )
+
+<img alt="image" src="doc/5-diff3.png" width="100%"/>
 
 ## 使い方
 
@@ -33,15 +41,18 @@ dump データの差分を確認 ( API トークン生成 ~ 退会処理 )
 ### データベースに接続
 
 初回利用時に dump を実施するデータベースの接続情報を作成してください
-<img alt="image" src="doc/5-project-input.png" width="70%"/>
+
+<img alt="image" src="doc/6-project-input.png" width="100%"/>
 
 作成した接続情報や dump 結果は SQLite データベースに保存されます  
+
 ( この SQLite データベースのセットアップは不要です )
 
 ### サンプル
 
 初回起動時は 2 つの接続設定のサンプルが作成されています
-<img alt="image" src="doc/6-samples.png" width="70%"/>
+
+<img alt="image" src="doc/7-samples.png" width="100%"/>
 
 このサンプルプロジェクトは [こちら](https://github.com/suzuki-hoge/db-diff-sample) で入手できます
 
@@ -79,18 +90,33 @@ dump データの差分を確認 ( API トークン生成 ~ 退会処理 )
 
 ### 大規模データについて
 
-ローカル開発環境や非商用環境での開発補助を想定しています
+ローカル開発環境や非商用環境での開発補助を想定しており、1 オンラインリクエストの差分を緻密に確認する用途を想定しています
 
-数万程度のデータ量でも動きますが、それ以上巨大なデータベースに対する動作は保証しません
+dump データは 1 テーブルにつき 1,000 行までしか取得されません
 
-1 オンラインリクエストの差分を緻密に確認する用途を想定しています
+必要に応じてテーブルごとに dump 設定を行って利用してください
+
+<img alt="image" src="doc/8-dump-config.png" width="100%"/>
+
+#### Ordered 1,000
+
+- 任意のカラムでソートして 1,000 行まで dump します
+- `create` や `update` を含むカラム名がテーブルにあれば、デフォルト設定として使われます
+  - `create` より `update` を含むカラム名が優先されます
+  - 複数ヒットした場合は一番右のカラムが優先されます
+- 可能な限りこれを指定してください
+  - Auto Increment の ID なども指定できますが、若い ID に差分が出た場合に 1,000 行に含まれなくなるリスクがあります
+
+#### Ignore
+
+- dump 対象となりません
+- 明らかに差分が発生しないテーブルや不要なテーブルに対して指定してください
+
+#### Limited 1,000
+
+- ソート条件なしで 1,000 行まで dump します
+- 1,000 行に満たないことがわかっているテーブルをとりあえず dump するケースなどで指定してください
 
 ### バージョンについて
 
 今後のメジャーバージョンアップによっては、過去に dump したデータは新しいバージョンでは使用できなくなる可能性があります
-
-### 機能追加予定
-
-- 暫定ページネーションを改善しカクつかないくらいにはする
-- dump するテーブルの除外設定をできるようにする
-- dump するレコードのソート順と行数上限を設定できるようにする
