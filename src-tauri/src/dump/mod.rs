@@ -1,5 +1,6 @@
-use diesel::SqliteConnection;
 use std::collections::HashMap;
+
+use diesel::SqliteConnection;
 
 use crate::db::snapshot::{insert_snapshot_summary, insert_table_snapshots};
 use crate::domain::dump_config::DumpConfig;
@@ -32,29 +33,24 @@ pub fn dump(conn: &SqliteConnection, project: &Project, snapshot_name: SnapshotN
     let snapshot_summary = SnapshotSummary::create(&snapshot_id, &snapshot_name);
     insert_snapshot_summary(conn, &project.project_id, &snapshot_summary)?;
 
-    let mut dump_config_map: HashMap<&TableName, &DumpConfig> = HashMap::new();
-    for dump_config in dump_configs {
-        dump_config_map.insert(&dump_config.table_name, dump_config);
-    }
+    let dump_configs: HashMap<&TableName, &DumpConfig> = dump_configs.iter().map(|dump_config| (&dump_config.table_name, dump_config)).collect();
 
     let table_schemata = adapter.get_table_schemata()?;
 
     for table_schema in table_schemata {
-        let dump_config = dump_config_map.get(&table_schema.table_name).unwrap();
+        let dump_config = dump_configs.get(&table_schema.table_name).unwrap();
 
         if dump_config.value == "ignore" {
             logger::info(format!("ignore: {}", &table_schema.table_name));
             continue;
         }
 
-        let col_schemata = adapter.get_col_schemata(&table_schema)?;
-
         let mut table_snapshots = vec![];
 
-        if col_schemata.has_any_primary_cols() {
-            let row_snapshots = adapter.get_row_snapshots(&table_schema, &col_schemata, &dump_config.value)?;
+        if table_schema.has_any_primary_cols() {
+            let row_snapshots = adapter.get_row_snapshots(&table_schema, &dump_config.value)?;
 
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
+            let (primary_col_name, col_names) = table_schema.get_all_col_names();
             table_snapshots.push(TableSnapshot::new(&table_schema.table_name, primary_col_name, col_names, row_snapshots));
         }
 

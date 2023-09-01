@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anyhow::anyhow;
 use itertools::Itertools;
@@ -7,7 +7,7 @@ use mysql::{from_row, from_value, Conn, Value};
 
 use crate::domain::dump_config::DumpConfig;
 use crate::domain::project::Project;
-use crate::domain::schema::{ColName, ColSchema, ColSchemata, TableName, TableSchema};
+use crate::domain::schema::{ColName, ColSchema, TableName, TableSchema};
 use crate::domain::snapshot::ColValue::*;
 use crate::domain::snapshot::{ColValue, RowSnapshot};
 use crate::dump::adapter::TargetDbAdapter;
@@ -48,66 +48,36 @@ impl TargetDbAdapter for TargetDbMysql80 {
     }
 
     fn get_table_schemata(&mut self) -> anyhow::Result<Vec<TableSchema>> {
-        let query = format!("select table_name from information_schema.tables where table_schema = '{}' order by table_name", self.schema);
+        let query = format!("select table_name, column_name, data_type, column_key from information_schema.columns where table_schema = '{}' order by table_name, ordinal_position", self.schema);
 
         logger::info(format!("query: {}", &query));
 
-        self.conn
-            .query(query)
-            .map(|result| {
-                result
-                    .map(|x| x.unwrap())
-                    .map(|row| {
-                        let table_name = from_row(row);
-                        TableSchema { table_name }
-                    })
-                    .collect()
-            })
-            .map_err(|e| anyhow!(e))
+        let mut table_names = HashSet::new();
+        let mut map1: HashMap<TableName, Vec<ColSchema>> = HashMap::new();
+        let mut map2: HashMap<TableName, Vec<ColSchema>> = HashMap::new();
+
+        let result = self.conn.query(query).map_err(|e| anyhow!(e))?;
+
+        for row in result.map(|x| x.unwrap()) {
+            let (table_name, col_name, data_type, col_key) = from_row::<(String, String, String, String)>(row);
+
+            table_names.insert(table_name.clone());
+
+            if &col_key == "PRI" {
+                map1.entry(table_name).or_default().push(ColSchema { col_name, data_type });
+            } else {
+                map2.entry(table_name).or_default().push(ColSchema { col_name, data_type });
+            }
+        }
+
+        Ok(table_names
+            .iter()
+            .map(|table_name| TableSchema::new(table_name, map1.get(table_name).unwrap_or(&vec![]), map2.get(table_name).unwrap_or(&vec![])))
+            .collect())
     }
 
-    fn get_col_schemata(&mut self, table_schema: &TableSchema) -> anyhow::Result<ColSchemata> {
-        let query = format!("select column_name, data_type, column_key from information_schema.columns where table_schema = '{}' and table_name = '{}' order by ordinal_position", self.schema, table_schema.table_name);
-
-        logger::info(format!("query: {}", &query));
-
-        let rows = self.conn.query(query).unwrap().map(|row| row.unwrap()).collect_vec();
-
-        let unique_cols = rows
-            .clone()
-            .into_iter()
-            .flat_map(|row| {
-                let (col_name, data_type, col_key) = from_row::<(String, String, String)>(row);
-                if &col_key == "PRI" {
-                    vec![ColSchema { col_name, data_type }]
-                } else {
-                    vec![]
-                }
-            })
-            .collect_vec();
-
-        let cols = rows
-            .into_iter()
-            .flat_map(|row| {
-                let (col_name, data_type, col_key) = from_row::<(String, String, String)>(row);
-                if &col_key != "PRI" {
-                    vec![ColSchema { col_name, data_type }]
-                } else {
-                    vec![]
-                }
-            })
-            .collect_vec();
-
-        Ok(ColSchemata::new(unique_cols, cols))
-    }
-
-    fn get_row_snapshots(
-        &mut self,
-        table_schema: &TableSchema,
-        col_schemata: &ColSchemata,
-        dump_config_value: &str,
-    ) -> anyhow::Result<Vec<RowSnapshot>> {
-        let all_cols = col_schemata.get_all_col_refs();
+    fn get_row_snapshots(&mut self, table_schema: &TableSchema, dump_config_value: &str) -> anyhow::Result<Vec<RowSnapshot>> {
+        let all_cols = table_schema.get_all_col_refs();
 
         let col_names = all_cols.iter().map(|col| as_select_col(col)).join(",");
         let order_by = if dump_config_value == "limited" { "".to_string() } else { format!("order by {dump_config_value}") };
@@ -124,7 +94,7 @@ impl TargetDbAdapter for TargetDbMysql80 {
                         let mut primary_cols = vec![];
                         let mut cols = vec![];
 
-                        for (i, is_primary) in col_schemata.get_indices() {
+                        for (i, is_primary) in table_schema.get_col_indices() {
                             let value: Value = row.get(i).unwrap();
                             let col = if value == NULL { Null } else { parse_col_value(all_cols[i], from_value(value)) };
                             if is_primary {
@@ -276,6 +246,32 @@ mod adapter_tests {
         adapter.conn.prep_exec(r#"insert into 17_string_07_json values (1, '{"id": 1, "name": "John"}')"#, ())?;
         adapter.conn.prep_exec(r#"insert into 17_string_07_json values (2, '[1, 2, "foo"]')"#, ())?;
         adapter.conn.prep_exec(r#"insert into 17_string_07_json values (3, '{"items": ["pc", "phone"], "option": {"id": 1}}')"#, ())?;
+
+        adapter.conn.prep_exec("create table 18_key_01_primary ( code int, primary key (code) )", ())?;
+
+        adapter.conn.prep_exec("create table 19_key_02_unique ( code int, unique (code) )", ())?;
+
+        adapter.conn.prep_exec("create table 20_key_03_unique_not_null ( code int not null, unique (code) )", ())?;
+
+        adapter.conn.prep_exec("create table 21_key_04_primary_primary ( code1 int, code2 int, primary key (code1, code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 22_key_05_primary_unique ( code1 int, code2 int, primary key (code1), unique (code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 23_key_06_primary_unique_not_null ( code1 int, code2 int not null, primary key (code1), unique (code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 24_key_07_unique_unique ( code1 int, code2 int, unique (code1), unique (code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 25_key_08_unique_not_null_unique ( code1 int not null, code2 int, unique (code1), unique (code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 26_key_09_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, unique (code1), unique (code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 27_key_10_multi_unique_unique ( code1 int, code2 int, unique (code1, code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 28_key_11_multi_unique_not_null_unique ( code1 int not null, code2 int, unique (code1, code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 29_key_12_multi_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, unique (code1, code2) )", ())?;
+
+        adapter.conn.prep_exec("create table 30_key_13_nothing ( code int )", ())?;
 
         migrate_sqlite_if_missing()?;
         let conn = create_sqlite_connection()?;
@@ -483,191 +479,79 @@ mod adapter_tests {
             ]
         );
 
-        Ok(())
-    }
-
-
-    #[test]
-    fn primary_key() -> anyhow::Result<()> {
-        let project = Project::new(&create_project_id(), "test-project", "red", Mysql, "user","password","127.0.0.1","19001","testdata");
-
-        let mut adapter = TargetDbMysql80::new(&project)?;
-
-        // drop all
-        for table_schema in adapter.get_table_schemata()? {
-            adapter.conn.prep_exec(format!("drop table {}", table_schema.table_name), ())?;
-        }
-
-        adapter.conn.prep_exec("create table 18_key_01_primary ( code int, primary key (code) )", ())?;
-
-        adapter.conn.prep_exec("create table 19_key_02_unique ( code int, unique (code) )", ())?;
-
-        adapter.conn.prep_exec("create table 20_key_03_unique_not_null ( code int not null, unique (code) )", ())?;
-
-        adapter.conn.prep_exec("create table 21_key_04_primary_primary ( code1 int, code2 int, primary key (code1, code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 22_key_05_primary_unique ( code1 int, code2 int, primary key (code1), unique (code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 23_key_06_primary_unique_not_null ( code1 int, code2 int not null, primary key (code1), unique (code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 24_key_07_unique_unique ( code1 int, code2 int, unique (code1), unique (code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 25_key_08_unique_not_null_unique ( code1 int not null, code2 int, unique (code1), unique (code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 26_key_09_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, unique (code1), unique (code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 27_key_10_multi_unique_unique ( code1 int, code2 int, unique (code1, code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 28_key_11_multi_unique_not_null_unique ( code1 int not null, code2 int, unique (code1, code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 29_key_12_multi_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, unique (code1, code2) )", ())?;
-
-        adapter.conn.prep_exec("create table 30_key_13_nothing ( code int )", ())?;
-
-        let table_schemata = adapter.get_table_schemata()?;
-
-        {
-            assert_eq!("18_key_01_primary", table_schemata[0].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[0])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code", primary_col_name);
-            assert_eq!(0, col_names.len());
-        }
-
-        {
-            assert_eq!("19_key_02_unique", table_schemata[1].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[1])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code"], col_names);
-        }
-
-        {
-            assert_eq!("20_key_03_unique_not_null", table_schemata[2].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[2])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code", primary_col_name);
-            assert_eq!(0, col_names.len());
-        }
-
-        {
-            assert_eq!("21_key_04_primary_primary", table_schemata[3].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[3])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1-code2", primary_col_name);
-            assert_eq!(0, col_names.len());
-        }
-
-        {
-            assert_eq!("22_key_05_primary_unique", table_schemata[4].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[4])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1", primary_col_name);
-            assert_eq!(vec!["code2"], col_names);
-        }
-
-        {
-            assert_eq!("23_key_06_primary_unique_not_null", table_schemata[5].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[5])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1", primary_col_name);
-            assert_eq!(vec!["code2"], col_names);
-        }
-
-        {
-            assert_eq!("24_key_07_unique_unique", table_schemata[6].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[6])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code1", "code2"], col_names);
-        }
-
-        {
-            assert_eq!("25_key_08_unique_not_null_unique", table_schemata[7].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[7])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1", primary_col_name);
-            assert_eq!(vec!["code2"], col_names);
-        }
-
-        {
-            assert_eq!("26_key_09_unique_not_null_unique_not_null", table_schemata[8].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[8])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1", primary_col_name);
-            assert_eq!(vec!["code2"], col_names);
-        }
-
-        {
-            assert_eq!("27_key_10_multi_unique_unique", table_schemata[9].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[9])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code1", "code2"], col_names);
-        }
-
-        {
-            assert_eq!("28_key_11_multi_unique_not_null_unique", table_schemata[10].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[10])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code1", "code2"], col_names);
-        }
-
-        {
-            assert_eq!("29_key_12_multi_unique_not_null_unique_not_null", table_schemata[11].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[11])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1-code2", primary_col_name);
-            assert_eq!(0, col_names.len());
-        }
-
-        {
-            assert_eq!("30_key_13_nothing", table_schemata[12].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[12])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code"], col_names);
-        }
+        assert(
+            &act[17],
+            "18_key_01_primary",
+            "code",
+            vec![],
+            vec![]
+        );
+        
+        // 19_key_02_unique
+
+        assert(
+            &act[18],
+            "20_key_03_unique_not_null",
+            "code",
+            vec![],
+            vec![]
+        );
+
+        assert(
+            &act[19],
+            "21_key_04_primary_primary",
+            "code1-code2",
+            vec![],
+            vec![]
+        );
+
+        assert(
+            &act[20],
+            "22_key_05_primary_unique",
+            "code1",
+            vec!["code2"],
+            vec![]
+        );
+
+        assert(
+            &act[21],
+            "23_key_06_primary_unique_not_null",
+            "code1",
+            vec!["code2"],
+            vec![]
+        );
+
+        // 24_key_07_unique_unique
+        
+        assert(
+            &act[22],
+            "25_key_08_unique_not_null_unique",
+            "code1",
+            vec!["code2"],
+            vec![]
+        );
+
+        assert(
+            &act[23],
+            "26_key_09_unique_not_null_unique_not_null",
+            "code1",
+            vec!["code2"],
+            vec![]
+        );
+        
+        // 27_key_10_multi_unique_unique
+
+        // 28_key_11_multi_unique_not_null_unique
+        
+        assert(
+            &act[24],
+            "29_key_12_multi_unique_not_null_unique_not_null",
+            "code1-code2",
+            vec![],
+            vec![]
+        );
+        
+        // 30_key_13_nothing
 
         Ok(())
     }
