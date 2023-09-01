@@ -170,11 +170,16 @@ fn parse_col_value(col_schema: &ColSchema, value: String) -> ColValue {
 mod adapter_tests {
     use itertools::Itertools;
 
+    use crate::db::{create_sqlite_connection, migrate_sqlite_if_missing};
+    use crate::db::project::insert_project;
+    use crate::db::snapshot::find_table_snapshots;
     use crate::domain::dump_config::DumpConfig;
     use crate::domain::project::{create_project_id, Project};
     use crate::domain::project::Rdbms::Mysql;
+    use crate::domain::snapshot::{ColValue, TableSnapshot};
     use crate::domain::snapshot::ColValue::*;
     use crate::dump::adapter::TargetDbAdapter;
+    use crate::dump::dump;
     use crate::dump::mysql80::TargetDbMysql80;
 
     fn s(s: &str) -> String {
@@ -209,7 +214,7 @@ mod adapter_tests {
     }
     
     #[test]
-    fn dump() -> anyhow::Result<()> {
+    fn dump_all() -> anyhow::Result<()> {
         let project = Project::new(&create_project_id(), "test-project", "red", Mysql, "user","password","127.0.0.1","19001","testdata");
 
         let mut adapter = TargetDbMysql80::new(&project)?;
@@ -272,413 +277,398 @@ mod adapter_tests {
         adapter.conn.prep_exec(r#"insert into 17_string_07_json values (2, '[1, 2, "foo"]')"#, ())?;
         adapter.conn.prep_exec(r#"insert into 17_string_07_json values (3, '{"items": ["pc", "phone"], "option": {"id": 1}}')"#, ())?;
 
+        migrate_sqlite_if_missing()?;
+        let conn = create_sqlite_connection()?;
+        
+        let project_id = create_project_id();
+        let project = Project::new(&project_id, "testdata-mysql80", "red", Mysql, "user", "password", "localhost", "19001", "testdata");
+        insert_project(&conn, &project)?;
+        
+        let snapshot_id = dump(&conn, &project, "test dump".to_string(), &adapter.get_dump_configs()?)?;
+        
+        let act = find_table_snapshots(&conn, &snapshot_id)?;
+        
+        fn assert(act: &TableSnapshot, table_name: &str, primary_col_name: &str, col_names: Vec<&str>, col_values: Vec<Vec<ColValue>>) {
+            assert_eq!(table_name, act.table_name);
+            assert_eq!(primary_col_name, act.primary_col_name);
+            assert_eq!(col_names.into_iter().map(String::from).collect_vec(), act.col_names);
+            assert_eq!(col_values.len(), act.row_snapshots.len());
+            for (i, col_value) in col_values.into_iter().enumerate() {
+                assert_eq!(col_value, act.row_snapshots[i].col_values);
+            }
+        }
+
+        assert(
+            &act[0],
+            "01_number_01_signed",
+            "id",
+            vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint"],
+            vec![
+                vec![SimpleNumber(s("127")),  SimpleNumber(s("32767")),  SimpleNumber(s("8388607")),  SimpleNumber(s("2147483647")),  SimpleNumber(s("9223372036854775807"))],
+                vec![SimpleNumber(s("-128")), SimpleNumber(s("-32768")), SimpleNumber(s("-8388608")), SimpleNumber(s("-2147483648")), SimpleNumber(s("-9223372036854775808"))]
+            ]
+        );
+
+        assert(
+            &act[1],
+            "02_number_02_unsigned",
+            "id",
+            vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint"],
+            vec![
+                vec![SimpleNumber(s("255")), SimpleNumber(s("65535")), SimpleNumber(s("16777215")), SimpleNumber(s("4294967295")), SimpleNumber(s("18446744073709551615"))],
+                vec![SimpleNumber(s("0")),   SimpleNumber(s("0")),     SimpleNumber(s("0")),        SimpleNumber(s("0")),          SimpleNumber(s("0"))]
+            ]
+        );
+
+        assert(
+            &act[2],
+            "03_number_03_fixed",
+            "id",
+            vec!["col_decimal", "col_numeric"],
+            vec![
+                vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99"))],
+                vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99"))]
+            ]
+        );
+
+        assert(
+            &act[3],
+            "04_number_04_float",
+            "id",
+            vec!["col_float", "col_double"],
+            vec![
+                vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99"))],
+                vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99"))]
+            ]
+        );
+
+        assert(
+            &act[4],
+            "05_number_05_bit",
+            "id",
+            vec!["col_bit"],
+            vec![
+                vec![BitNumber(s("1000000000"))],
+                vec![BitNumber(s("0"))],
+                vec![BitNumber(s("1000000000"))],
+                vec![BitNumber(s("0"))],
+            ]
+        );
+
+        assert(
+            &act[5],
+            "06_date_01_date",
+            "id",
+            vec!["col_date"],
+            vec![
+                vec![DateString(s("2020-01-01"))],
+            ]
+        );
+
+        assert(
+            &act[6],
+            "07_date_02_time",
+            "id",
+            vec!["col_time"],
+            vec![
+                vec![DateString(s("00:00:00"))],
+            ]
+        );
+
+        assert(
+            &act[7],
+            "08_date_03_datetime",
+            "id",
+            vec!["col_datetime"],
+            vec![
+                vec![DateString(s("2020-01-01 00:00:00"))],
+            ]
+        );
+
+        assert(
+            &act[8],
+            "09_date_04_timestamp",
+            "id",
+            vec!["col_timestamp"],
+            vec![
+                vec![DateString(s("2020-01-01 00:00:00"))],
+            ]
+        );
+
+        assert(
+            &act[9],
+            "10_date_05_year",
+            "id",
+            vec!["col_year"],
+            vec![
+                vec![DateString(s("2020"))],
+            ]
+        );
+
+        assert(
+            &act[10],
+            "11_string_01_char",
+            "id",
+            vec!["col_char", "col_varchar"],
+            vec![
+                vec![SimpleString(s("abc")), SimpleString(s("abc"))],
+                vec![SimpleString(s("")),    SimpleString(s(""))],
+                vec![Null,                   Null]
+            ]
+        );
+
+        assert(
+            &act[11],
+            "12_string_02_binary",
+            "id",
+            vec!["col_binary", "col_varbinary"],
+            vec![
+                vec![BinaryString(s("abc")), BinaryString(s("abc"))],
+            ]
+        );
+
+        assert(
+            &act[12],
+            "13_string_03_blob",
+            "id",
+            vec!["col_tinyblob", "col_blob", "col_mediumblob", "col_longblob"],
+            vec![
+                vec![BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc"))]
+            ]
+        );
+
+        assert(
+            &act[13],
+            "14_string_04_text",
+            "id",
+            vec!["col_tinytext", "col_text", "col_mediumtext", "col_longtext"],
+            vec![
+                vec![SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc"))],
+            ]
+        );
+
+        assert(
+            &act[14],
+            "15_string_05_enum",
+            "id",
+            vec!["col_enum"],
+            vec![
+                vec![SimpleString(s("active"))],
+                vec![SimpleString(s("inactive"))]
+            ]
+        );
+
+        assert(
+            &act[15],
+            "16_string_06_set",
+            "id",
+            vec!["col_set"],
+            vec![
+                vec![SimpleString(s("pc"))],
+                vec![SimpleString(s("phone"))],
+                vec![SimpleString(s("pc,phone"))],
+                vec![SimpleString(s("pc,phone"))]
+            ]
+        );
+
+        assert(
+            &act[16],
+            "17_string_07_json",
+            "id",
+            vec!["col_json"],
+            vec![
+                vec![JsonString(s(r#"{"id": 1, "name": "John"}"#))],
+                vec![JsonString(s(r#"[1, 2, "foo"]"#))],
+                vec![JsonString(s(r#"{"items": ["pc", "phone"], "option": {"id": 1}}"#))],
+            ]
+        );
+
+        Ok(())
+    }
+
+
+    #[test]
+    fn primary_key() -> anyhow::Result<()> {
+        let project = Project::new(&create_project_id(), "test-project", "red", Mysql, "user","password","127.0.0.1","19001","testdata");
+
+        let mut adapter = TargetDbMysql80::new(&project)?;
+
+        // drop all
+        for table_schema in adapter.get_table_schemata()? {
+            adapter.conn.prep_exec(format!("drop table {}", table_schema.table_name), ())?;
+        }
+
         adapter.conn.prep_exec("create table 18_key_01_primary ( code int, primary key (code) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 19_key_02_unique ( code int, unique (code) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 20_key_03_unique_not_null ( code int not null, unique (code) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 21_key_04_primary_primary ( code1 int, code2 int, primary key (code1, code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 22_key_05_primary_unique ( code1 int, code2 int, primary key (code1), unique (code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 23_key_06_primary_unique_not_null ( code1 int, code2 int not null, primary key (code1), unique (code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 24_key_07_unique_unique ( code1 int, code2 int, unique (code1), unique (code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 25_key_08_unique_not_null_unique ( code1 int not null, code2 int, unique (code1), unique (code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 26_key_09_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, unique (code1), unique (code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 27_key_10_multi_unique_unique ( code1 int, code2 int, unique (code1, code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 28_key_11_multi_unique_not_null_unique ( code1 int not null, code2 int, unique (code1, code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 29_key_12_multi_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, unique (code1, code2) )", ())?;
-        
+
         adapter.conn.prep_exec("create table 30_key_13_nothing ( code int )", ())?;
-        
+
         let table_schemata = adapter.get_table_schemata()?;
-        
+
         {
-            assert_eq!("01_number_01_signed", table_schemata[0].table_name);
-            
+            assert_eq!("18_key_01_primary", table_schemata[0].table_name);
+
             let col_schemata = adapter.get_col_schemata(&table_schemata[0])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[0], &col_schemata, "limited")?;
-
-            assert_eq!(vec![SimpleNumber(s("127")),  SimpleNumber(s("32767")),  SimpleNumber(s("8388607")),  SimpleNumber(s("2147483647")),  SimpleNumber(s("9223372036854775807"))],  row_snapshots[0].col_values);
-            assert_eq!(vec![SimpleNumber(s("-128")), SimpleNumber(s("-32768")), SimpleNumber(s("-8388608")), SimpleNumber(s("-2147483648")), SimpleNumber(s("-9223372036854775808"))], row_snapshots[1].col_values);
+            assert_eq!("code", primary_col_name);
+            assert_eq!(0, col_names.len());
         }
 
         {
-            assert_eq!("02_number_02_unsigned", table_schemata[1].table_name);
+            assert_eq!("19_key_02_unique", table_schemata[1].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[1])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[1], &col_schemata, "limited")?;
-
-            assert_eq!(vec![SimpleNumber(s("255")), SimpleNumber(s("65535")), SimpleNumber(s("16777215")), SimpleNumber(s("4294967295")), SimpleNumber(s("18446744073709551615"))], row_snapshots[0].col_values);
-            assert_eq!(vec![SimpleNumber(s("0")),   SimpleNumber(s("0")),     SimpleNumber(s("0")),        SimpleNumber(s("0")),          SimpleNumber(s("0"))],                    row_snapshots[1].col_values);
+            assert_eq!("", primary_col_name);
+            assert_eq!(vec!["code"], col_names);
         }
 
         {
-            assert_eq!("03_number_03_fixed", table_schemata[2].table_name);
+            assert_eq!("20_key_03_unique_not_null", table_schemata[2].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[2])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_decimal", "col_numeric"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[2], &col_schemata, "limited")?;
-
-            assert_eq!(vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99"))],  row_snapshots[0].col_values);
-            assert_eq!(vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99"))], row_snapshots[1].col_values);
+            assert_eq!("code", primary_col_name);
+            assert_eq!(0, col_names.len());
         }
 
         {
-            assert_eq!("04_number_04_float", table_schemata[3].table_name);
+            assert_eq!("21_key_04_primary_primary", table_schemata[3].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[3])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_float", "col_double"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[3], &col_schemata, "limited")?;
-
-            assert_eq!(vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99"))],  row_snapshots[0].col_values);
-            assert_eq!(vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99"))], row_snapshots[1].col_values);
+            assert_eq!("code1-code2", primary_col_name);
+            assert_eq!(0, col_names.len());
         }
 
         {
-            assert_eq!("05_number_05_bit", table_schemata[4].table_name);
+            assert_eq!("22_key_05_primary_unique", table_schemata[4].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[4])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_bit"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[4], &col_schemata, "limited")?;
-
-            assert_eq!(vec![BitNumber(s("1000000000"))], row_snapshots[0].col_values);
-            assert_eq!(vec![BitNumber(s("0"))],          row_snapshots[1].col_values);
-            assert_eq!(vec![BitNumber(s("1000000000"))], row_snapshots[2].col_values);
-            assert_eq!(vec![BitNumber(s("0"))],          row_snapshots[3].col_values);
+            assert_eq!("code1", primary_col_name);
+            assert_eq!(vec!["code2"], col_names);
         }
 
         {
-            assert_eq!("06_date_01_date", table_schemata[5].table_name);
+            assert_eq!("23_key_06_primary_unique_not_null", table_schemata[5].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[5])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_date"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[5], &col_schemata, "limited")?;
-
-            assert_eq!(vec![DateString(s("2020-01-01"))], row_snapshots[0].col_values);
+            assert_eq!("code1", primary_col_name);
+            assert_eq!(vec!["code2"], col_names);
         }
 
         {
-            assert_eq!("07_date_02_time", table_schemata[6].table_name);
+            assert_eq!("24_key_07_unique_unique", table_schemata[6].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[6])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_time"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[6], &col_schemata, "limited")?;
-
-            assert_eq!(vec![DateString(s("00:00:00"))], row_snapshots[0].col_values);
+            assert_eq!("", primary_col_name);
+            assert_eq!(vec!["code1", "code2"], col_names);
         }
 
         {
-            assert_eq!("08_date_03_datetime", table_schemata[7].table_name);
+            assert_eq!("25_key_08_unique_not_null_unique", table_schemata[7].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[7])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_datetime"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[7], &col_schemata, "limited")?;
-
-            assert_eq!(vec![DateString(s("2020-01-01 00:00:00"))], row_snapshots[0].col_values);
+            assert_eq!("code1", primary_col_name);
+            assert_eq!(vec!["code2"], col_names);
         }
 
         {
-            assert_eq!("09_date_04_timestamp", table_schemata[8].table_name);
+            assert_eq!("26_key_09_unique_not_null_unique_not_null", table_schemata[8].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[8])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_timestamp"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[8], &col_schemata, "limited")?;
-
-            assert_eq!(vec![DateString(s("2020-01-01 00:00:00"))], row_snapshots[0].col_values);
+            assert_eq!("code1", primary_col_name);
+            assert_eq!(vec!["code2"], col_names);
         }
 
         {
-            assert_eq!("10_date_05_year", table_schemata[9].table_name);
+            assert_eq!("27_key_10_multi_unique_unique", table_schemata[9].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[9])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_year"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[9], &col_schemata, "limited")?;
-
-            assert_eq!(vec![DateString(s("2020"))], row_snapshots[0].col_values);
+            assert_eq!("", primary_col_name);
+            assert_eq!(vec!["code1", "code2"], col_names);
         }
 
         {
-            assert_eq!("11_string_01_char", table_schemata[10].table_name);
+            assert_eq!("28_key_11_multi_unique_not_null_unique", table_schemata[10].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[10])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_char", "col_varchar"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[10], &col_schemata, "limited")?;
-
-            assert_eq!(vec![SimpleString(s("abc")), SimpleString(s("abc"))], row_snapshots[0].col_values);
-            assert_eq!(vec![SimpleString(s("")), SimpleString(s(""))],       row_snapshots[1].col_values);
-            assert_eq!(vec![Null, Null],                                     row_snapshots[2].col_values);
+            assert_eq!("", primary_col_name);
+            assert_eq!(vec!["code1", "code2"], col_names);
         }
 
         {
-            assert_eq!("12_string_02_binary", table_schemata[11].table_name);
+            assert_eq!("29_key_12_multi_unique_not_null_unique_not_null", table_schemata[11].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[11])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_binary", "col_varbinary"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
+            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[11], &col_schemata, "limited")?;
-
-            assert_eq!(vec![BinaryString(s("abc")), BinaryString(s("abc"))], row_snapshots[0].col_values);
+            assert_eq!("code1-code2", primary_col_name);
+            assert_eq!(0, col_names.len());
         }
 
         {
-            assert_eq!("13_string_03_blob", table_schemata[12].table_name);
+            assert_eq!("30_key_13_nothing", table_schemata[12].table_name);
 
             let col_schemata = adapter.get_col_schemata(&table_schemata[12])?;
 
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_tinyblob", "col_blob", "col_mediumblob", "col_longblob"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
-
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[12], &col_schemata, "limited")?;
-
-            assert_eq!(vec![BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc"))], row_snapshots[0].col_values);
-        }
-
-        {
-            assert_eq!("14_string_04_text", table_schemata[13].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[13])?;
-
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_tinytext", "col_text", "col_mediumtext", "col_longtext"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
-
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[13], &col_schemata, "limited")?;
-
-            assert_eq!(vec![SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc"))], row_snapshots[0].col_values);
-        }
-
-        {
-            assert_eq!("15_string_05_enum", table_schemata[14].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[14])?;
-
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_enum"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
-
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[14], &col_schemata, "limited")?;
-
-            assert_eq!(vec![SimpleString(s("active"))],   row_snapshots[0].col_values);
-            assert_eq!(vec![SimpleString(s("inactive"))], row_snapshots[1].col_values);
-        }
-
-        {
-            assert_eq!("16_string_06_set", table_schemata[15].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[15])?;
-
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_set"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
-
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[15], &col_schemata, "limited")?;
-
-            assert_eq!(vec![SimpleString(s("pc"))],       row_snapshots[0].col_values);
-            assert_eq!(vec![SimpleString(s("phone"))],    row_snapshots[1].col_values);
-            assert_eq!(vec![SimpleString(s("pc,phone"))], row_snapshots[2].col_values);
-            assert_eq!(vec![SimpleString(s("pc,phone"))], row_snapshots[3].col_values);
-        }
-
-        {
-            assert_eq!("17_string_07_json", table_schemata[16].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[16])?;
-
-            assert_eq!(vec!["id"], col_schemata.primary_cols.iter().map(|primary_col|&primary_col.col_name).collect_vec());
-            assert_eq!(vec!["col_json"], col_schemata.cols.iter().map(|col| &col.col_name).collect_vec());
-
-            let row_snapshots = adapter.get_row_snapshots(&table_schemata[16], &col_schemata, "limited")?;
-
-            assert_eq!(vec![JsonString(s(r#"{"id": 1, "name": "John"}"#))],                       row_snapshots[0].col_values);
-            assert_eq!(vec![JsonString(s(r#"[1, 2, "foo"]"#))],                                   row_snapshots[1].col_values);
-            assert_eq!(vec![JsonString(s(r#"{"items": ["pc", "phone"], "option": {"id": 1}}"#))], row_snapshots[2].col_values);
-        }
-
-        {
-            assert_eq!("18_key_01_primary", table_schemata[17].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[17])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code", primary_col_name);
-            assert_eq!(0, col_names.len());
-        }
-
-        {
-            assert_eq!("19_key_02_unique", table_schemata[18].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[18])?;
-
             let (primary_col_name, col_names) = col_schemata.get_all_col_names();
 
             assert_eq!("", primary_col_name);
             assert_eq!(vec!["code"], col_names);
         }
 
-        {
-            assert_eq!("20_key_03_unique_not_null", table_schemata[19].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[19])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-            
-            assert_eq!("code", primary_col_name);
-            assert_eq!(0, col_names.len());
-        }
-
-        {
-            assert_eq!("21_key_04_primary_primary", table_schemata[20].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[20])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1-code2", primary_col_name);
-            assert_eq!(0, col_names.len());
-        }
-
-        {
-            assert_eq!("22_key_05_primary_unique", table_schemata[21].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[21])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1", primary_col_name);
-            assert_eq!(vec!["code2"], col_names);
-        }
-        
-        {
-            assert_eq!("23_key_06_primary_unique_not_null", table_schemata[22].table_name);
-        
-            let col_schemata = adapter.get_col_schemata(&table_schemata[22])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1", primary_col_name);
-            assert_eq!(vec!["code2"], col_names);
-        }
-
-        {
-            assert_eq!("24_key_07_unique_unique", table_schemata[23].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[23])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-            
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code1", "code2"], col_names);
-        }
-
-        {
-            assert_eq!("25_key_08_unique_not_null_unique", table_schemata[24].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[24])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1", primary_col_name);
-            assert_eq!(vec!["code2"], col_names);
-        }
-
-        {
-            assert_eq!("26_key_09_unique_not_null_unique_not_null", table_schemata[25].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[25])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-
-            assert_eq!("code1", primary_col_name);
-            assert_eq!(vec!["code2"], col_names);
-        }
-
-        {
-            assert_eq!("27_key_10_multi_unique_unique", table_schemata[26].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[26])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-            
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code1", "code2"], col_names);
-        }
-
-        {
-            assert_eq!("28_key_11_multi_unique_not_null_unique", table_schemata[27].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[27])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-            
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code1", "code2"], col_names);
-        }
-
-        {
-            assert_eq!("29_key_12_multi_unique_not_null_unique_not_null", table_schemata[28].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[28])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-            
-            assert_eq!("code1-code2", primary_col_name);
-            assert_eq!(0, col_names.len());
-        }
-
-        {
-            assert_eq!("30_key_13_nothing", table_schemata[29].table_name);
-
-            let col_schemata = adapter.get_col_schemata(&table_schemata[29])?;
-
-            let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-            
-            assert_eq!("", primary_col_name);
-            assert_eq!(vec!["code"], col_names);
-        }
-        
         Ok(())
     }
 }
