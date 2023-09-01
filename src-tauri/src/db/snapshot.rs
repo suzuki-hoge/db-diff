@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use diesel::prelude::*;
 use diesel::{RunQueryDsl, SqliteConnection};
+use itertools::Itertools;
 
 use schema::snapshot_summaries as snapshot_summaries_table;
 use schema::table_snapshots as table_snapshots_table;
@@ -83,9 +84,9 @@ pub fn find_table_snapshots(conn: &SqliteConnection, snapshot_id: &SnapshotId) -
     Ok(rows.into_iter().map(|row| row.to()).collect())
 }
 
-pub fn insert_table_snapshot(conn: &SqliteConnection, snapshot_id: &SnapshotId, table_snapshot: &TableSnapshot) -> anyhow::Result<()> {
-    let record = TableSnapshotRecord::from(table_snapshot, snapshot_id);
-    diesel::insert_into(schema::table_snapshots::table).values(&record).execute(conn).map_err(|e| anyhow!(e))?;
+pub fn insert_table_snapshots(conn: &SqliteConnection, snapshot_id: &SnapshotId, table_snapshots: Vec<TableSnapshot>) -> anyhow::Result<()> {
+    let records = table_snapshots.iter().map(|table_snapshot| TableSnapshotRecord::from(table_snapshot, snapshot_id)).collect_vec();
+    diesel::insert_into(schema::table_snapshots::table).values(records).execute(conn).map_err(|e| anyhow!(e))?;
     Ok(())
 }
 
@@ -95,7 +96,7 @@ mod tests {
 
     use crate::db::project::insert_project;
     use crate::db::snapshot::{
-        all_snapshot_summaries, delete_snapshot_summary, find_table_snapshots, insert_snapshot_summary, insert_table_snapshot,
+        all_snapshot_summaries, delete_snapshot_summary, find_table_snapshots, insert_snapshot_summary, insert_table_snapshots,
         update_snapshot_summary,
     };
     use crate::db::{create_sqlite_connection, migrate_sqlite_if_missing};
@@ -181,14 +182,22 @@ mod tests {
         assert_eq!(0, table_snapshots.len());
 
         // insert
-        let row_snapshot1 = RowSnapshot::new(vec![n("1")], vec![s("123"), n("1200")]);
-        let row_snapshot2 = RowSnapshot::new(vec![n("2")], vec![s("456"), n("560")]);
-        let table_snapshot =
-            TableSnapshot::new(&table_name, "id".to_string(), vec!["code".to_string(), "price".to_string()], vec![row_snapshot1, row_snapshot2]);
-        insert_table_snapshot(&conn, &snapshot_id, &table_snapshot)?;
+        let act = TableSnapshot::new(
+            &table_name,
+            "id".to_string(),
+            vec!["code".to_string(), "price".to_string()],
+            vec![RowSnapshot::new(vec![n("1")], vec![s("123"), n("1200")]), RowSnapshot::new(vec![n("2")], vec![s("456"), n("560")])],
+        );
+        let exp = TableSnapshot::new(
+            &table_name,
+            "id".to_string(),
+            vec!["code".to_string(), "price".to_string()],
+            vec![RowSnapshot::new(vec![n("1")], vec![s("123"), n("1200")]), RowSnapshot::new(vec![n("2")], vec![s("456"), n("560")])],
+        );
+        insert_table_snapshots(&conn, &snapshot_id, vec![act])?;
 
         let table_snapshots = find_table_snapshots(&conn, &snapshot_id)?;
-        assert_eq!(vec![table_snapshot], table_snapshots);
+        assert_eq!(vec![exp], table_snapshots);
 
         Ok(())
     }

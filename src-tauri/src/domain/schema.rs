@@ -56,5 +56,4 @@ impl ColSchemata {
 pub struct ColSchema {
     pub col_name: ColName,
     pub data_type: String,
-    pub col_type: String,
 }

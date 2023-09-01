@@ -67,7 +67,7 @@ impl TargetDbAdapter for TargetDbMysql80 {
     }
 
     fn get_col_schemata(&mut self, table_schema: &TableSchema) -> anyhow::Result<ColSchemata> {
-        let query = format!("select column_name, data_type, column_type, column_key from information_schema.columns where table_schema = '{}' and table_name = '{}' order by ordinal_position", self.schema, table_schema.table_name);
+        let query = format!("select column_name, data_type, column_key from information_schema.columns where table_schema = '{}' and table_name = '{}' order by ordinal_position", self.schema, table_schema.table_name);
 
         logger::info(format!("query: {}", &query));
 
@@ -77,9 +77,9 @@ impl TargetDbAdapter for TargetDbMysql80 {
             .clone()
             .into_iter()
             .flat_map(|row| {
-                let (col_name, data_type, col_type, col_key) = from_row::<(String, String, String, String)>(row);
+                let (col_name, data_type, col_key) = from_row::<(String, String, String)>(row);
                 if &col_key == "PRI" {
-                    vec![ColSchema { col_name, data_type, col_type }]
+                    vec![ColSchema { col_name, data_type }]
                 } else {
                     vec![]
                 }
@@ -89,9 +89,9 @@ impl TargetDbAdapter for TargetDbMysql80 {
         let cols = rows
             .into_iter()
             .flat_map(|row| {
-                let (col_name, data_type, col_type, col_key) = from_row::<(String, String, String, String)>(row);
+                let (col_name, data_type, col_key) = from_row::<(String, String, String)>(row);
                 if &col_key != "PRI" {
-                    vec![ColSchema { col_name, data_type, col_type }]
+                    vec![ColSchema { col_name, data_type }]
                 } else {
                     vec![]
                 }
@@ -679,214 +679,211 @@ mod parse_col_value_tests {
     use crate::domain::snapshot::ColValue;
     use crate::dump::mysql80::parse_col_value;
 
-    fn sut(data_type: &str, col_type: &str, value: &str) -> ColValue {
-        parse_col_value(
-            &ColSchema { col_name: "col_test".to_string(), data_type: data_type.to_string(), col_type: col_type.to_string() },
-            value.to_string(),
-        )
+    fn sut(data_type: &str, value: &str) -> ColValue {
+        parse_col_value(&ColSchema { col_name: "col_test".to_string(), data_type: data_type.to_string() }, value.to_string())
     }
 
     #[test]
     fn parse_i_tinyint() {
         let exp = "42";
-        assert_eq!(exp, sut("tinyint", "tinyint", "42").as_display_value());
+        assert_eq!(exp, sut("tinyint", "42").as_display_value());
     }
 
     #[test]
     fn parse_u_tinyint() {
         let exp = "42";
-        assert_eq!(exp, sut("tinyint", "tinyint unsigned", "42").as_display_value());
+        assert_eq!(exp, sut("tinyint", "42").as_display_value());
     }
 
     #[test]
     fn parse_i_smallint() {
         let exp = "42";
-        assert_eq!(exp, sut("smallint", "smallint", "42").as_display_value());
+        assert_eq!(exp, sut("smallint", "42").as_display_value());
     }
 
     #[test]
     fn parse_u_smallint() {
         let exp = "42";
-        assert_eq!(exp, sut("smallint", "smallint unsigned", "42").as_display_value());
+        assert_eq!(exp, sut("smallint", "42").as_display_value());
     }
 
     #[test]
     fn parse_i_mediumint() {
         let exp = "42";
-        assert_eq!(exp, sut("mediumint", "mediumint", "42").as_display_value());
+        assert_eq!(exp, sut("mediumint", "42").as_display_value());
     }
 
     #[test]
     fn parse_u_mediumint() {
         let exp = "42";
-        assert_eq!(exp, sut("mediumint", "mediumint unsigned", "42").as_display_value());
+        assert_eq!(exp, sut("mediumint", "42").as_display_value());
     }
 
     #[test]
     fn parse_i_int() {
         let exp = "42";
-        assert_eq!(exp, sut("int", "int", "42").as_display_value());
+        assert_eq!(exp, sut("int", "42").as_display_value());
     }
 
     #[test]
     fn parse_u_int() {
         let exp = "42";
-        assert_eq!(exp, sut("int", "int unsigned", "42").as_display_value());
+        assert_eq!(exp, sut("int", "42").as_display_value());
     }
 
     #[test]
     fn parse_i_bigint() {
         let exp = "42";
-        assert_eq!(exp, sut("bigint", "bigint", "42").as_display_value());
+        assert_eq!(exp, sut("bigint", "42").as_display_value());
     }
 
     #[test]
     fn parse_u_bigint() {
         let exp = "42";
-        assert_eq!(exp, sut("bigint", "bigint unsigned", "42").as_display_value());
+        assert_eq!(exp, sut("bigint", "42").as_display_value());
     }
 
     #[test]
     fn parse_decimal() {
         let exp = "42.0";
-        assert_eq!(exp, sut("decimal", "decimal(5,2)", "42.0").as_display_value());
+        assert_eq!(exp, sut("decimal", "42.0").as_display_value());
     }
 
     #[test]
     fn parse_float() {
         let exp = "42.0";
-        assert_eq!(exp, sut("float", "float(5,2)", "42.0").as_display_value());
+        assert_eq!(exp, sut("float", "42.0").as_display_value());
     }
 
     #[test]
     fn parse_double() {
         let exp = "42.0";
-        assert_eq!(exp, sut("double", "double(5,2)", "42.0").as_display_value());
+        assert_eq!(exp, sut("double", "42.0").as_display_value());
     }
 
     #[test]
     fn parse_bit() {
         let exp = "bit(111)";
-        assert_eq!(exp, sut("bit", "bit(3)", "111").as_display_value());
+        assert_eq!(exp, sut("bit", "111").as_display_value());
     }
 
     #[test]
     fn parse_date() {
         let exp = r#""2020-01-01""#;
-        assert_eq!(exp, sut("date", "date", "2020-01-01").as_display_value());
+        assert_eq!(exp, sut("date", "2020-01-01").as_display_value());
     }
 
     #[test]
     fn parse_time() {
         let exp = r#""12:34:56""#;
-        assert_eq!(exp, sut("time", "time", "12:34:56").as_display_value());
+        assert_eq!(exp, sut("time", "12:34:56").as_display_value());
     }
 
     #[test]
     fn parse_datetime() {
         let exp = r#""2020-01-01 12:34:56""#;
-        assert_eq!(exp, sut("datetime", "datetime", "2020-01-01 12:34:56").as_display_value());
+        assert_eq!(exp, sut("datetime", "2020-01-01 12:34:56").as_display_value());
     }
 
     #[test]
     fn parse_timestamp() {
         let exp = r#""2020-01-01 12:34:56""#;
-        assert_eq!(exp, sut("timestamp", "timestamp", "2020-01-01 12:34:56").as_display_value());
+        assert_eq!(exp, sut("timestamp", "2020-01-01 12:34:56").as_display_value());
     }
 
     #[test]
     fn parse_year() {
         let exp = r#""2020""#;
-        assert_eq!(exp, sut("year", "year", "2020").as_display_value());
+        assert_eq!(exp, sut("year", "2020").as_display_value());
     }
 
     #[test]
     fn parse_char() {
         let exp = r#""abc""#;
-        assert_eq!(exp, sut("char", "char(3)", "abc").as_display_value());
+        assert_eq!(exp, sut("char", "abc").as_display_value());
     }
 
     #[test]
     fn parse_varchar() {
         let exp = r#""abc""#;
-        assert_eq!(exp, sut("varchar", "varchar(3)", "abc").as_display_value());
+        assert_eq!(exp, sut("varchar", "abc").as_display_value());
     }
 
     #[test]
     fn parse_binary() {
         let exp = "binary";
-        assert_eq!(exp, sut("binary", "binary(3)", "abc").as_display_value());
+        assert_eq!(exp, sut("binary", "abc").as_display_value());
     }
 
     #[test]
     fn parse_varbinary() {
         let exp = "binary";
-        assert_eq!(exp, sut("varbinary", "varbinary(3)", "abc").as_display_value());
+        assert_eq!(exp, sut("varbinary", "abc").as_display_value());
     }
 
     #[test]
     fn parse_tinyblob() {
         let exp = "binary";
-        assert_eq!(exp, sut("tinyblob", "tinyblob", "abc").as_display_value());
+        assert_eq!(exp, sut("tinyblob", "abc").as_display_value());
     }
 
     #[test]
     fn parse_blob() {
         let exp = "binary";
-        assert_eq!(exp, sut("blob", "blob", "abc").as_display_value());
+        assert_eq!(exp, sut("blob", "abc").as_display_value());
     }
 
     #[test]
     fn parse_mediumblob() {
         let exp = "binary";
-        assert_eq!(exp, sut("mediumblob", "mediumblob", "abc").as_display_value());
+        assert_eq!(exp, sut("mediumblob", "abc").as_display_value());
     }
 
     #[test]
     fn parse_longblob() {
         let exp = "binary";
-        assert_eq!(exp, sut("longblob", "longblob", "abc").as_display_value());
+        assert_eq!(exp, sut("longblob", "abc").as_display_value());
     }
 
     #[test]
     fn parse_tinytext() {
         let exp = r#""abc""#;
-        assert_eq!(exp, sut("tinytext", "tinytext", "abc").as_display_value());
+        assert_eq!(exp, sut("tinytext", "abc").as_display_value());
     }
 
     #[test]
     fn parse_text() {
         let exp = r#""abc""#;
-        assert_eq!(exp, sut("text", "text", "abc").as_display_value());
+        assert_eq!(exp, sut("text", "abc").as_display_value());
     }
 
     #[test]
     fn parse_mediumtext() {
         let exp = r#""abc""#;
-        assert_eq!(exp, sut("mediumtext", "mediumtext", "abc").as_display_value());
+        assert_eq!(exp, sut("mediumtext", "abc").as_display_value());
     }
 
     #[test]
     fn parse_longtext() {
         let exp = r#""abc""#;
-        assert_eq!(exp, sut("longtext", "longtext", "abc").as_display_value());
+        assert_eq!(exp, sut("longtext", "abc").as_display_value());
     }
 
     #[test]
     fn parse_enum() {
         let exp = r#""abc""#;
-        assert_eq!(exp, sut("enum", "enum('abc','def')", "abc").as_display_value());
+        assert_eq!(exp, sut("enum", "abc").as_display_value());
     }
 
     #[test]
     fn parse_set() {
         let exp = r#""abc,def""#;
-        assert_eq!(exp, sut("set", "set('abc','def')", "abc,def").as_display_value());
+        assert_eq!(exp, sut("set", "abc,def").as_display_value());
     }
 
     #[test]
     fn parse_json() {
         let exp = r#"{"id": 1, "name": "John"}"#;
-        assert_eq!(exp, sut("json", "json", r#"{"id": 1, "name": "John"}"#).as_display_value());
+        assert_eq!(exp, sut("json", r#"{"id": 1, "name": "John"}"#).as_display_value());
     }
 }

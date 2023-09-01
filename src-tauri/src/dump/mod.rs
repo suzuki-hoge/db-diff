@@ -1,7 +1,7 @@
 use diesel::SqliteConnection;
 use std::collections::HashMap;
 
-use crate::db::snapshot::{insert_snapshot_summary, insert_table_snapshot};
+use crate::db::snapshot::{insert_snapshot_summary, insert_table_snapshots};
 use crate::domain::dump_config::DumpConfig;
 use crate::domain::project::Project;
 use crate::domain::project::Rdbms::Mysql;
@@ -49,14 +49,16 @@ pub fn dump(conn: &SqliteConnection, project: &Project, snapshot_name: SnapshotN
 
         let col_schemata = adapter.get_col_schemata(&table_schema)?;
 
+        let mut table_snapshots = vec![];
+
         if col_schemata.has_any_primary_cols() {
             let row_snapshots = adapter.get_row_snapshots(&table_schema, &col_schemata, &dump_config.value)?;
 
             let (primary_col_name, col_names) = col_schemata.get_all_col_names();
-            let table_snapshot = TableSnapshot::new(&table_schema.table_name, primary_col_name, col_names, row_snapshots);
-
-            insert_table_snapshot(conn, &snapshot_id, &table_snapshot)?;
+            table_snapshots.push(TableSnapshot::new(&table_schema.table_name, primary_col_name, col_names, row_snapshots));
         }
+
+        insert_table_snapshots(conn, &snapshot_id, table_snapshots)?;
     }
 
     Ok(snapshot_id)
