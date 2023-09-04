@@ -58,7 +58,7 @@ impl ProjectJson {
 }
 
 #[tauri::command]
-pub fn all_projects_command(app_state: State<'_, AppState>) -> Result<Vec<ProjectJson>, String> {
+pub async fn all_projects_command(app_state: State<'_, AppState>) -> Result<Vec<ProjectJson>, String> {
     logger::info("start all_projects_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -69,7 +69,7 @@ pub fn all_projects_command(app_state: State<'_, AppState>) -> Result<Vec<Projec
 }
 
 #[tauri::command]
-pub fn select_project_command(app_state: State<'_, AppState>, project_id: ProjectId) -> Result<(), String> {
+pub async fn select_project_command(app_state: State<'_, AppState>, project_id: ProjectId) -> Result<(), String> {
     logger::info("start select_project_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -89,7 +89,7 @@ pub fn select_project_command(app_state: State<'_, AppState>, project_id: Projec
 }
 
 #[tauri::command]
-pub fn test_connection_project_command(project_json: ProjectJson) -> Result<String, String> {
+pub async fn test_connection_project_command(project_json: ProjectJson) -> Result<String, String> {
     logger::info("start test_connection_project_command");
 
     let project = project_json.into();
@@ -103,7 +103,7 @@ pub fn test_connection_project_command(project_json: ProjectJson) -> Result<Stri
 }
 
 #[tauri::command]
-pub fn insert_project_command(app_state: State<'_, AppState>, project_json: ProjectJson) -> Result<(), String> {
+pub async fn insert_project_command(app_state: State<'_, AppState>, project_json: ProjectJson) -> Result<(), String> {
     logger::info("start insert_project_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -114,7 +114,7 @@ pub fn insert_project_command(app_state: State<'_, AppState>, project_json: Proj
 }
 
 #[tauri::command]
-pub fn update_project_command(app_state: State<'_, AppState>, project_json: ProjectJson) -> Result<(), String> {
+pub async fn update_project_command(app_state: State<'_, AppState>, project_json: ProjectJson) -> Result<(), String> {
     logger::info("start update_project_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -125,7 +125,7 @@ pub fn update_project_command(app_state: State<'_, AppState>, project_json: Proj
 }
 
 #[tauri::command]
-pub fn delete_project_command(app_state: State<'_, AppState>, project_id: ProjectId) -> Result<(), String> {
+pub async fn delete_project_command(app_state: State<'_, AppState>, project_id: ProjectId) -> Result<(), String> {
     logger::info("start delete_project_command");
 
     let conn = app_state.conn.lock().unwrap();

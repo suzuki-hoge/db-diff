@@ -21,19 +21,39 @@ export const SnapshotCreatePage: FC = () => {
   }, [location])
 
   const dump: (snapshotName: string, dumpConfigs: DumpConfig[]) => void = (snapshotName: string, dumpConfigs: DumpConfig[]) => {
-    toast
-      .promise(
-        invoke('dump_snapshot_command', { snapshotName, dumpConfigJsons: dumpConfigs }),
-        { loading: 'スナップショットを作成中...', success: '保存しました', error: 'エラーが発生しました' },
-        { style: { minWidth: '200px' } }
-      )
+    invoke('dump_snapshot_command', { snapshotName, dumpConfigJsons: dumpConfigs })
       .then(() => {
         navigate('/snapshot-summary/list')
       })
       .catch((e: string) => {
+        toast.dismiss()
         navigate('/error', { state: { message: e } })
       })
+
+    const toastId = toast.loading('保存中...')
+    setTimeout(() => {
+      watch(toastId, 0)
+    }, 500)
   }
 
   return dumpConfigs.length !== 0 ? <SnapshotCreate dumpConfigs={dumpConfigs} dump={dump} /> : <></>
+}
+
+function watch(toastId: string, last: number): void {
+  invoke<{ all: number; lines: string[] }>('get_snapshot_processing_status')
+    .then((data) => {
+      data.lines.slice(last).forEach((line) => {
+        toast.success(line, { id: toastId })
+      })
+      if (data.all !== data.lines.length) {
+        setTimeout(() => {
+          watch(toastId, data.lines.length)
+        }, 10)
+      } else {
+        toast.success('保存しました', { id: toastId })
+      }
+    })
+    .catch(() => {
+      toast.dismiss()
+    })
 }

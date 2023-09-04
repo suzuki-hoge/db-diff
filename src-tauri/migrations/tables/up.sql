@@ -62,4 +62,7 @@ values ('D07231B4-D5CC-4E25-AF01-2D5F9DB59980', 'Sample 1', '#c2e0c6', 'MySQL', 
         'sample1'),
        ('0BB817C5-5045-4668-8385-0E0B6625FE0D', 'Sample 2', '#c5def5', 'MySQL', 'user', 'password', '127.0.0.1',
         '23306',
-        'sample2');
+        'sample2'),
+       ('1AA6531E-F31C-46B8-98E4-19DA51DA23F0', 'Sample 3', '#f9d0c4', 'MySQL', 'user', 'password', '127.0.0.1',
+        '33306',
+        'sample3');

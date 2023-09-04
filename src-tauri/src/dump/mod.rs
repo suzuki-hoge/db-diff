@@ -1,6 +1,10 @@
 use std::collections::HashMap;
+use std::fs::{read_to_string, remove_file, File, OpenOptions};
+use std::io::Write;
 
+use anyhow::anyhow;
 use diesel::SqliteConnection;
+use itertools::Itertools;
 
 use crate::db::snapshot::{insert_snapshot_summary, insert_table_snapshots};
 use crate::domain::dump_config::DumpConfig;
@@ -11,6 +15,7 @@ use crate::domain::snapshot::{create_snapshot_id, SnapshotId, SnapshotName, Snap
 use crate::dump::adapter::TargetDbAdapter;
 use crate::dump::mysql80::TargetDbMysql80;
 use crate::logger;
+use crate::workspace::workspace_path;
 
 mod adapter;
 mod mysql80;
@@ -37,11 +42,14 @@ pub fn dump(conn: &SqliteConnection, project: &Project, snapshot_name: SnapshotN
 
     let table_schemata = adapter.get_table_schemata()?;
 
+    init_process_status(table_schemata.len())?;
+
     for table_schema in table_schemata {
         let dump_config = dump_configs.get(&table_schema.table_name).unwrap();
 
         if dump_config.value == "ignore" {
             logger::info(format!("ignore: {}", &table_schema.table_name));
+
             continue;
         }
 
@@ -52,10 +60,35 @@ pub fn dump(conn: &SqliteConnection, project: &Project, snapshot_name: SnapshotN
 
             let (primary_col_name, col_names) = table_schema.get_all_col_names();
             table_snapshots.push(TableSnapshot::new(&table_schema.table_name, primary_col_name, col_names, row_snapshots));
+
+            append_process_status(&table_schema.table_name)?;
         }
 
         insert_table_snapshots(conn, &snapshot_id, table_snapshots)?;
     }
 
     Ok(snapshot_id)
+}
+
+pub fn read_process_status() -> anyhow::Result<(usize, Vec<String>)> {
+    let lines = read_to_string(workspace_path("processing.txt")?)?;
+    let lines = lines.split('\n').into_iter().collect_vec();
+    let all = lines[0].parse().unwrap();
+    let lines = lines[1..].iter().filter(|line| !line.is_empty()).map(|line| line.to_string()).collect_vec();
+    Ok((all, lines))
+}
+
+fn init_process_status(all: usize) -> anyhow::Result<()> {
+    let path = workspace_path("processing.txt")?;
+    let _ = remove_file(&path);
+    let mut file = File::create(path)?;
+    file.write_all(format!("{all}\n").as_bytes())?;
+    file.flush().map_err(|e| anyhow!(e))
+}
+
+fn append_process_status(table_name: &TableName) -> anyhow::Result<()> {
+    let path = workspace_path("processing.txt")?;
+    let mut file = OpenOptions::new().append(true).create(true).open(path)?;
+    file.write_all(format!("{table_name}\n").as_bytes()).map_err(|e| anyhow!(e))?;
+    file.flush().map_err(|e| anyhow!(e))
 }

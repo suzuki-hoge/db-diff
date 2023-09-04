@@ -8,7 +8,7 @@ use crate::db::dump_config::insert_dump_configs;
 use crate::db::project::all_projects;
 use crate::db::snapshot::{all_snapshot_summaries, delete_snapshot_summary, update_snapshot_summary};
 use crate::domain::snapshot::{SnapshotId, SnapshotName, SnapshotSummary};
-use crate::dump::dump;
+use crate::dump::{dump, read_process_status};
 use crate::logger;
 
 #[derive(Serialize, Deserialize)]
@@ -30,7 +30,7 @@ impl SnapshotSummaryJson {
 }
 
 #[tauri::command]
-pub fn all_snapshot_summaries_command(app_state: State<'_, AppState>) -> Result<Vec<SnapshotSummaryJson>, String> {
+pub async fn all_snapshot_summaries_command(app_state: State<'_, AppState>) -> Result<Vec<SnapshotSummaryJson>, String> {
     logger::info("start all_snapshot_summaries_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -45,7 +45,7 @@ pub fn all_snapshot_summaries_command(app_state: State<'_, AppState>) -> Result<
 }
 
 #[tauri::command]
-pub fn update_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_summary_json: SnapshotSummaryJson) -> Result<(), String> {
+pub async fn update_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_summary_json: SnapshotSummaryJson) -> Result<(), String> {
     logger::info("start update_snapshot_summary_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -56,7 +56,7 @@ pub fn update_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_
 }
 
 #[tauri::command]
-pub fn delete_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_id: SnapshotId) -> Result<(), String> {
+pub async fn delete_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_id: SnapshotId) -> Result<(), String> {
     logger::info("start delete_snapshot_summary_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -67,7 +67,7 @@ pub fn delete_snapshot_summary_command(app_state: State<'_, AppState>, snapshot_
 }
 
 #[tauri::command]
-pub fn dump_snapshot_command(
+pub async fn dump_snapshot_command(
     app_state: State<'_, AppState>,
     snapshot_name: SnapshotName,
     dump_config_jsons: Vec<DumpConfigJson>,
@@ -90,4 +90,17 @@ pub fn dump_snapshot_command(
     logger::info("end   dump_snapshot_command");
 
     Ok(())
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProcessingStatusJson {
+    pub all: usize,
+    pub lines: Vec<String>,
+}
+
+#[tauri::command]
+pub async fn get_snapshot_processing_status() -> Result<ProcessingStatusJson, String> {
+    let (all, lines) = read_process_status().map_err(|e| e.to_string())?;
+    Ok(ProcessingStatusJson { all, lines })
 }

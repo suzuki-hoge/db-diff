@@ -70,6 +70,8 @@ impl TargetDbAdapter for TargetDbMysql80 {
             }
         }
 
+        let mut table_names = table_names.into_iter().collect_vec();
+        table_names.sort();
         Ok(table_names
             .iter()
             .map(|table_name| TableSchema::new(table_name, map1.get(table_name).unwrap_or(&vec![]), map2.get(table_name).unwrap_or(&vec![])))

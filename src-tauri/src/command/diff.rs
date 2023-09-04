@@ -88,7 +88,7 @@ impl TableDiffJson {
 }
 
 #[tauri::command]
-pub fn find_snapshot_diff_command(
+pub async fn find_snapshot_diff_command(
     app_state: State<'_, AppState>,
     snapshot_id1: SnapshotId,
     snapshot_id2: SnapshotId,
@@ -108,7 +108,7 @@ pub fn find_snapshot_diff_command(
 }
 
 #[tauri::command]
-pub fn create_snapshot_diff_command(
+pub async fn create_snapshot_diff_command(
     app_state: State<'_, AppState>,
     snapshot_id1: SnapshotId,
     snapshot_id2: SnapshotId,

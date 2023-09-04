@@ -33,7 +33,7 @@ export const DumpConfigInput: FC<Props> = (props) => {
         }}
       />
       {isOrdered(props.value) && (
-        <p className={styles.text}>
+        <div className={styles.text}>
           <span>order by</span>
           <Select
             defaultValue={selectedColName}
@@ -44,7 +44,7 @@ export const DumpConfigInput: FC<Props> = (props) => {
             }}
           />
           <span>desc</span>
-        </p>
+        </div>
       )}
     </div>
   )

@@ -32,7 +32,7 @@ impl DumpConfigJson {
 }
 
 #[tauri::command]
-pub fn find_recent_dump_configs_command(app_state: State<'_, AppState>) -> Result<Vec<DumpConfigJson>, String> {
+pub async fn find_recent_dump_configs_command(app_state: State<'_, AppState>) -> Result<Vec<DumpConfigJson>, String> {
     logger::info("start find_recent_dump_configs_command");
 
     let conn = app_state.conn.lock().unwrap();
@@ -53,7 +53,7 @@ pub fn find_recent_dump_configs_command(app_state: State<'_, AppState>) -> Resul
 }
 
 #[tauri::command]
-pub fn find_dump_configs_command(app_state: State<'_, AppState>, snapshot_id: SnapshotId) -> Result<Vec<DumpConfigJson>, String> {
+pub async fn find_dump_configs_command(app_state: State<'_, AppState>, snapshot_id: SnapshotId) -> Result<Vec<DumpConfigJson>, String> {
     logger::info("start find_dump_configs_command");
 
     let conn = app_state.conn.lock().unwrap();
