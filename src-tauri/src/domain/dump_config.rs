@@ -22,7 +22,7 @@ impl DumpConfig {
             (Some(_), Some(col_name)) => col_name.clone(),
             (Some(col_name), None) => col_name.clone(),
             (None, Some(col_name)) => col_name.clone(),
-            (None, None) => "limited".to_string(),
+            (None, None) => "ignore".to_string(),
         };
 
         Self { table_name: table_name.into(), col_names, value }
@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn init() {
         let sut = DumpConfig::init("users", vec!["id", "name"]);
-        assert_eq!(sut.value, "limited");
+        assert_eq!(sut.value, "ignore");
 
         let sut = DumpConfig::init("users", vec!["id", "name", "created_at"]);
         assert_eq!(sut.value, "created_at");

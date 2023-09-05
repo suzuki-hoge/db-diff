@@ -169,18 +169,18 @@ mod adapter_tests {
             adapter.conn.prep_exec(format!("drop table {}", table_schema.table_name), ())?;
         }
 
-        adapter.conn.prep_exec("create table 01_number_01_signed ( id int auto_increment, col_tinyint tinyint, col_smallint smallint, col_mediumint mediumint, col_int int, col_bigint bigint, primary key (id) )", ())?;
-        adapter.conn.prep_exec("create table 11_string_01_char ( id int auto_increment, col_char char(3), col_varchar varchar(3), primary key (id) )", ())?;
+        adapter.conn.prep_exec("create table 01_number_01_signed ( id int auto_increment, col_tinyint tinyint, col_smallint smallint, col_mediumint mediumint, col_int int, col_bigint bigint, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("create table 11_string_01_char ( id int auto_increment, col_char char(3), col_varchar varchar(3), updated_at datetime, primary key (id) )", ())?;
 
         let sut = DumpConfig::sort(adapter.get_dump_configs()?);
 
         assert_eq!("01_number_01_signed", sut[0].table_name);
-        assert_eq!("id, col_tinyint, col_smallint, col_mediumint, col_int, col_bigint", sut[0].col_names.join(", "));
-        assert_eq!("limited", sut[0].value);
+        assert_eq!("id, col_tinyint, col_smallint, col_mediumint, col_int, col_bigint, updated_at", sut[0].col_names.join(", "));
+        assert_eq!("updated_at", sut[0].value);
 
         assert_eq!("11_string_01_char", sut[1].table_name);
-        assert_eq!("id, col_char, col_varchar", sut[1].col_names.join(", "));
-        assert_eq!("limited", sut[1].value);
+        assert_eq!("id, col_char, col_varchar, updated_at", sut[1].col_names.join(", "));
+        assert_eq!("updated_at", sut[1].value);
 
         Ok(())
     }
@@ -196,82 +196,82 @@ mod adapter_tests {
             adapter.conn.prep_exec(format!("drop table {}", table_schema.table_name), ())?;
         }
 
-        adapter.conn.prep_exec("create table 01_number_01_signed ( id int auto_increment, col_tinyint tinyint, col_smallint smallint, col_mediumint mediumint, col_int int, col_bigint bigint, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 01_number_01_signed values (1, 127, 32767, 8388607, 2147483647, 9223372036854775807), (2, -128, -32768, -8388608, -2147483648, -9223372036854775808)", ())?;
+        adapter.conn.prep_exec("create table 01_number_01_signed ( id int auto_increment, col_tinyint tinyint, col_smallint smallint, col_mediumint mediumint, col_int int, col_bigint bigint, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 01_number_01_signed values (1, 127, 32767, 8388607, 2147483647, 9223372036854775807, '20230901123456'), (2, -128, -32768, -8388608, -2147483648, -9223372036854775808, '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 02_number_02_unsigned ( id int auto_increment, col_tinyint tinyint unsigned, col_smallint smallint unsigned, col_mediumint mediumint unsigned, col_int int unsigned, col_bigint bigint unsigned, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 02_number_02_unsigned values (1, 255, 65535, 16777215, 4294967295, 18446744073709551615), (2, 0, 0, 0, 0, 0)", ())?;
+        adapter.conn.prep_exec("create table 02_number_02_unsigned ( id int auto_increment, col_tinyint tinyint unsigned, col_smallint smallint unsigned, col_mediumint mediumint unsigned, col_int int unsigned, col_bigint bigint unsigned, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 02_number_02_unsigned values (1, 255, 65535, 16777215, 4294967295, 18446744073709551615, '20230901123456'), (2, 0, 0, 0, 0, 0, '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 03_number_03_fixed ( id int auto_increment, col_decimal decimal(5, 2), col_numeric numeric(5, 2), primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 03_number_03_fixed values (1, 999.99, 999.99), (2, -999.99, -999.99)", ())?;
+        adapter.conn.prep_exec("create table 03_number_03_fixed ( id int auto_increment, col_decimal decimal(5, 2), col_numeric numeric(5, 2), updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 03_number_03_fixed values (1, 999.99, 999.99, '20230901123456'), (2, -999.99, -999.99, '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 04_number_04_float ( id int auto_increment, col_float float(5, 2), col_double double(5, 2), primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 04_number_04_float values (1, 999.99, 999.99), (2, -999.99, -999.99)", ())?;
+        adapter.conn.prep_exec("create table 04_number_04_float ( id int auto_increment, col_float float(5, 2), col_double double(5, 2), updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 04_number_04_float values (1, 999.99, 999.99, '20230901123456'), (2, -999.99, -999.99, '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 05_number_05_bit ( id int auto_increment, col_bit bit(10), primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 05_number_05_bit values (1, b'1000000000'), (2, b'0'), (3, 512), (4, 0)", ())?;
+        adapter.conn.prep_exec("create table 05_number_05_bit ( id int auto_increment, col_bit bit(10), updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 05_number_05_bit values (1, b'1000000000', '20230901123456'), (2, b'0', '20230901123456'), (3, 512, '20230901123456'), (4, 0, '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 06_date_01_date ( id int auto_increment, col_date date, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 06_date_01_date values (1, '2020-01-01')", ())?;
+        adapter.conn.prep_exec("create table 06_date_01_date ( id int auto_increment, col_date date, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 06_date_01_date values (1, '2020-01-01', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 07_date_02_time ( id int auto_increment, col_time time, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 07_date_02_time values (1, '00:00:00')", ())?;
+        adapter.conn.prep_exec("create table 07_date_02_time ( id int auto_increment, col_time time, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 07_date_02_time values (1, '00:00:00', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 08_date_03_datetime ( id int auto_increment, col_datetime datetime, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 08_date_03_datetime values (1, '2020-01-01 00:00:00')", ())?;
+        adapter.conn.prep_exec("create table 08_date_03_datetime ( id int auto_increment, col_datetime datetime, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 08_date_03_datetime values (1, '2020-01-01 00:00:00', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 09_date_04_timestamp ( id int auto_increment, col_timestamp timestamp, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 09_date_04_timestamp values (1, '2020-01-01 00:00:00')", ())?;
+        adapter.conn.prep_exec("create table 09_date_04_timestamp ( id int auto_increment, col_timestamp timestamp, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 09_date_04_timestamp values (1, '2020-01-01 00:00:00', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 10_date_05_year ( id int auto_increment, col_year year, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 10_date_05_year values (1, 2020)", ())?;
+        adapter.conn.prep_exec("create table 10_date_05_year ( id int auto_increment, col_year year, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 10_date_05_year values (1, 2020, '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 11_string_01_char ( id int auto_increment, col_char char(3), col_varchar varchar(3), primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 11_string_01_char values (1, 'abc', 'abc'), (2, '', ''), (3, null, null)", ())?;
+        adapter.conn.prep_exec("create table 11_string_01_char ( id int auto_increment, col_char char(3), col_varchar varchar(3), updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 11_string_01_char values (1, 'abc', 'abc', '20230901123456'), (2, '', '', '20230901123456'), (3, null, null, '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 12_string_02_binary ( id int auto_increment, col_binary binary(3), col_varbinary varbinary(3), primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 12_string_02_binary values (1, 'abc', 'abc')", ())?;
+        adapter.conn.prep_exec("create table 12_string_02_binary ( id int auto_increment, col_binary binary(3), col_varbinary varbinary(3), updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 12_string_02_binary values (1, 'abc', 'abc', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 13_string_03_blob ( id int auto_increment, col_tinyblob tinyblob, col_blob blob, col_mediumblob mediumblob, col_longblob longblob, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 13_string_03_blob values (1, 'abc', 'abc', 'abc', 'abc')", ())?;
+        adapter.conn.prep_exec("create table 13_string_03_blob ( id int auto_increment, col_tinyblob tinyblob, col_blob blob, col_mediumblob mediumblob, col_longblob longblob, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 13_string_03_blob values (1, 'abc', 'abc', 'abc', 'abc', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 14_string_04_text ( id int auto_increment, col_tinytext tinytext, col_text text, col_mediumtext mediumtext, col_longtext longtext, primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 14_string_04_text values (1, 'abc', 'abc', 'abc', 'abc')", ())?;
+        adapter.conn.prep_exec("create table 14_string_04_text ( id int auto_increment, col_tinytext tinytext, col_text text, col_mediumtext mediumtext, col_longtext longtext, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 14_string_04_text values (1, 'abc', 'abc', 'abc', 'abc', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 15_string_05_enum ( id int auto_increment, col_enum enum ('active', 'inactive'), primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 15_string_05_enum values (1, 'active'), (2, 'inactive')", ())?;
+        adapter.conn.prep_exec("create table 15_string_05_enum ( id int auto_increment, col_enum enum ('active', 'inactive'), updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 15_string_05_enum values (1, 'active', '20230901123456'), (2, 'inactive', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 16_string_06_set ( id int auto_increment, col_set set ('pc', 'phone'), primary key (id) )", ())?;
-        adapter.conn.prep_exec("insert into 16_string_06_set values (1, 'pc'), (2, 'phone'), (3, 'phone,pc'), (4, 'pc,phone')", ())?;
+        adapter.conn.prep_exec("create table 16_string_06_set ( id int auto_increment, col_set set ('pc', 'phone'), updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec("insert into 16_string_06_set values (1, 'pc', '20230901123456'), (2, 'phone', '20230901123456'), (3, 'phone,pc', '20230901123456'), (4, 'pc,phone', '20230901123456')", ())?;
 
-        adapter.conn.prep_exec("create table 17_string_07_json ( id int auto_increment, col_json json, primary key (id) )", ())?;
-        adapter.conn.prep_exec(r#"insert into 17_string_07_json values (1, '{"id": 1, "name": "John"}')"#, ())?;
-        adapter.conn.prep_exec(r#"insert into 17_string_07_json values (2, '[1, 2, "foo"]')"#, ())?;
-        adapter.conn.prep_exec(r#"insert into 17_string_07_json values (3, '{"items": ["pc", "phone"], "option": {"id": 1}}')"#, ())?;
+        adapter.conn.prep_exec("create table 17_string_07_json ( id int auto_increment, col_json json, updated_at datetime, primary key (id) )", ())?;
+        adapter.conn.prep_exec(r#"insert into 17_string_07_json values (1, '{"id": 1, "name": "John"}', '20230901123456')"#, ())?;
+        adapter.conn.prep_exec(r#"insert into 17_string_07_json values (2, '[1, 2, "foo"]', '20230901123456')"#, ())?;
+        adapter.conn.prep_exec(r#"insert into 17_string_07_json values (3, '{"items": ["pc", "phone"], "option": {"id": 1}}', '20230901123456')"#, ())?;
 
-        adapter.conn.prep_exec("create table 18_key_01_primary ( code int, primary key (code) )", ())?;
+        adapter.conn.prep_exec("create table 18_key_01_primary ( code int, updated_at datetime, primary key (code) )", ())?;
 
-        adapter.conn.prep_exec("create table 19_key_02_unique ( code int, unique (code) )", ())?;
+        adapter.conn.prep_exec("create table 19_key_02_unique ( code int, updated_at datetime, unique (code) )", ())?;
 
-        adapter.conn.prep_exec("create table 20_key_03_unique_not_null ( code int not null, unique (code) )", ())?;
+        adapter.conn.prep_exec("create table 20_key_03_unique_not_null ( code int not null, updated_at datetime, unique (code) )", ())?;
 
-        adapter.conn.prep_exec("create table 21_key_04_primary_primary ( code1 int, code2 int, primary key (code1, code2) )", ())?;
+        adapter.conn.prep_exec("create table 21_key_04_primary_primary ( code1 int, code2 int, updated_at datetime, primary key (code1, code2) )", ())?;
 
-        adapter.conn.prep_exec("create table 22_key_05_primary_unique ( code1 int, code2 int, primary key (code1), unique (code2) )", ())?;
+        adapter.conn.prep_exec("create table 22_key_05_primary_unique ( code1 int, code2 int, updated_at datetime, primary key (code1), unique (code2) )", ())?;
 
-        adapter.conn.prep_exec("create table 23_key_06_primary_unique_not_null ( code1 int, code2 int not null, primary key (code1), unique (code2) )", ())?;
+        adapter.conn.prep_exec("create table 23_key_06_primary_unique_not_null ( code1 int, code2 int not null, updated_at datetime, primary key (code1), unique (code2) )", ())?;
 
-        adapter.conn.prep_exec("create table 24_key_07_unique_unique ( code1 int, code2 int, unique (code1), unique (code2) )", ())?;
+        adapter.conn.prep_exec("create table 24_key_07_unique_unique ( code1 int, code2 int, updated_at datetime, unique (code1), unique (code2) )", ())?;
 
-        adapter.conn.prep_exec("create table 25_key_08_unique_not_null_unique ( code1 int not null, code2 int, unique (code1), unique (code2) )", ())?;
+        adapter.conn.prep_exec("create table 25_key_08_unique_not_null_unique ( code1 int not null, code2 int, updated_at datetime, unique (code1), unique (code2) )", ())?;
 
-        adapter.conn.prep_exec("create table 26_key_09_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, unique (code1), unique (code2) )", ())?;
+        adapter.conn.prep_exec("create table 26_key_09_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, updated_at datetime, unique (code1), unique (code2) )", ())?;
 
-        adapter.conn.prep_exec("create table 27_key_10_multi_unique_unique ( code1 int, code2 int, unique (code1, code2) )", ())?;
+        adapter.conn.prep_exec("create table 27_key_10_multi_unique_unique ( code1 int, code2 int, updated_at datetime, unique (code1, code2) )", ())?;
 
-        adapter.conn.prep_exec("create table 28_key_11_multi_unique_not_null_unique ( code1 int not null, code2 int, unique (code1, code2) )", ())?;
+        adapter.conn.prep_exec("create table 28_key_11_multi_unique_not_null_unique ( code1 int not null, code2 int, updated_at datetime, unique (code1, code2) )", ())?;
 
-        adapter.conn.prep_exec("create table 29_key_12_multi_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, unique (code1, code2) )", ())?;
+        adapter.conn.prep_exec("create table 29_key_12_multi_unique_not_null_unique_not_null ( code1 int not null, code2 int not null, updated_at datetime, unique (code1, code2) )", ())?;
 
         adapter.conn.prep_exec("create table 30_key_13_nothing ( code int )", ())?;
 
@@ -300,10 +300,10 @@ mod adapter_tests {
             &act[0],
             "01_number_01_signed",
             "id",
-            vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint"],
+            vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint", "updated_at"],
             vec![
-                vec![SimpleNumber(s("127")),  SimpleNumber(s("32767")),  SimpleNumber(s("8388607")),  SimpleNumber(s("2147483647")),  SimpleNumber(s("9223372036854775807"))],
-                vec![SimpleNumber(s("-128")), SimpleNumber(s("-32768")), SimpleNumber(s("-8388608")), SimpleNumber(s("-2147483648")), SimpleNumber(s("-9223372036854775808"))]
+                vec![SimpleNumber(s("127")),  SimpleNumber(s("32767")),  SimpleNumber(s("8388607")),  SimpleNumber(s("2147483647")),  SimpleNumber(s("9223372036854775807")),  DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleNumber(s("-128")), SimpleNumber(s("-32768")), SimpleNumber(s("-8388608")), SimpleNumber(s("-2147483648")), SimpleNumber(s("-9223372036854775808")), DateString(s("2023-09-01 12:34:56"))]
             ]
         );
 
@@ -311,10 +311,10 @@ mod adapter_tests {
             &act[1],
             "02_number_02_unsigned",
             "id",
-            vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint"],
+            vec!["col_tinyint", "col_smallint", "col_mediumint", "col_int", "col_bigint", "updated_at"],
             vec![
-                vec![SimpleNumber(s("255")), SimpleNumber(s("65535")), SimpleNumber(s("16777215")), SimpleNumber(s("4294967295")), SimpleNumber(s("18446744073709551615"))],
-                vec![SimpleNumber(s("0")),   SimpleNumber(s("0")),     SimpleNumber(s("0")),        SimpleNumber(s("0")),          SimpleNumber(s("0"))]
+                vec![SimpleNumber(s("255")), SimpleNumber(s("65535")), SimpleNumber(s("16777215")), SimpleNumber(s("4294967295")), SimpleNumber(s("18446744073709551615")), DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleNumber(s("0")),   SimpleNumber(s("0")),     SimpleNumber(s("0")),        SimpleNumber(s("0")),          SimpleNumber(s("0")),                    DateString(s("2023-09-01 12:34:56"))]
             ]
         );
 
@@ -322,10 +322,10 @@ mod adapter_tests {
             &act[2],
             "03_number_03_fixed",
             "id",
-            vec!["col_decimal", "col_numeric"],
+            vec!["col_decimal", "col_numeric", "updated_at"],
             vec![
-                vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99"))],
-                vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99"))]
+                vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99")),  DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99")), DateString(s("2023-09-01 12:34:56"))]
             ]
         );
 
@@ -333,10 +333,10 @@ mod adapter_tests {
             &act[3],
             "04_number_04_float",
             "id",
-            vec!["col_float", "col_double"],
+            vec!["col_float", "col_double", "updated_at"],
             vec![
-                vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99"))],
-                vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99"))]
+                vec![SimpleNumber(s("999.99")),  SimpleNumber(s("999.99")),  DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleNumber(s("-999.99")), SimpleNumber(s("-999.99")), DateString(s("2023-09-01 12:34:56"))]
             ]
         );
 
@@ -344,12 +344,12 @@ mod adapter_tests {
             &act[4],
             "05_number_05_bit",
             "id",
-            vec!["col_bit"],
+            vec!["col_bit", "updated_at"],
             vec![
-                vec![BitNumber(s("1000000000"))],
-                vec![BitNumber(s("0"))],
-                vec![BitNumber(s("1000000000"))],
-                vec![BitNumber(s("0"))],
+                vec![BitNumber(s("1000000000")), DateString(s("2023-09-01 12:34:56"))],
+                vec![BitNumber(s("0")),          DateString(s("2023-09-01 12:34:56"))],
+                vec![BitNumber(s("1000000000")), DateString(s("2023-09-01 12:34:56"))],
+                vec![BitNumber(s("0")),          DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -357,9 +357,9 @@ mod adapter_tests {
             &act[5],
             "06_date_01_date",
             "id",
-            vec!["col_date"],
+            vec!["col_date", "updated_at"],
             vec![
-                vec![DateString(s("2020-01-01"))],
+                vec![DateString(s("2020-01-01")), DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -367,9 +367,9 @@ mod adapter_tests {
             &act[6],
             "07_date_02_time",
             "id",
-            vec!["col_time"],
+            vec!["col_time", "updated_at"],
             vec![
-                vec![DateString(s("00:00:00"))],
+                vec![DateString(s("00:00:00")), DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -377,9 +377,9 @@ mod adapter_tests {
             &act[7],
             "08_date_03_datetime",
             "id",
-            vec!["col_datetime"],
+            vec!["col_datetime", "updated_at"],
             vec![
-                vec![DateString(s("2020-01-01 00:00:00"))],
+                vec![DateString(s("2020-01-01 00:00:00")), DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -387,9 +387,9 @@ mod adapter_tests {
             &act[8],
             "09_date_04_timestamp",
             "id",
-            vec!["col_timestamp"],
+            vec!["col_timestamp", "updated_at"],
             vec![
-                vec![DateString(s("2020-01-01 00:00:00"))],
+                vec![DateString(s("2020-01-01 00:00:00")), DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -397,9 +397,9 @@ mod adapter_tests {
             &act[9],
             "10_date_05_year",
             "id",
-            vec!["col_year"],
+            vec!["col_year", "updated_at"],
             vec![
-                vec![DateString(s("2020"))],
+                vec![DateString(s("2020")), DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -407,11 +407,11 @@ mod adapter_tests {
             &act[10],
             "11_string_01_char",
             "id",
-            vec!["col_char", "col_varchar"],
+            vec!["col_char", "col_varchar", "updated_at"],
             vec![
-                vec![SimpleString(s("abc")), SimpleString(s("abc"))],
-                vec![SimpleString(s("")),    SimpleString(s(""))],
-                vec![Null,                   Null]
+                vec![SimpleString(s("abc")), SimpleString(s("abc")), DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleString(s("")),    SimpleString(s("")),    DateString(s("2023-09-01 12:34:56"))],
+                vec![Null,                   Null,                   DateString(s("2023-09-01 12:34:56"))]
             ]
         );
 
@@ -419,9 +419,9 @@ mod adapter_tests {
             &act[11],
             "12_string_02_binary",
             "id",
-            vec!["col_binary", "col_varbinary"],
+            vec!["col_binary", "col_varbinary", "updated_at"],
             vec![
-                vec![BinaryString(s("abc")), BinaryString(s("abc"))],
+                vec![BinaryString(s("abc")), BinaryString(s("abc")), DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -429,9 +429,9 @@ mod adapter_tests {
             &act[12],
             "13_string_03_blob",
             "id",
-            vec!["col_tinyblob", "col_blob", "col_mediumblob", "col_longblob"],
+            vec!["col_tinyblob", "col_blob", "col_mediumblob", "col_longblob", "updated_at"],
             vec![
-                vec![BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc"))]
+                vec![BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc")), BinaryString(s("abc")), DateString(s("2023-09-01 12:34:56"))]
             ]
         );
 
@@ -439,9 +439,9 @@ mod adapter_tests {
             &act[13],
             "14_string_04_text",
             "id",
-            vec!["col_tinytext", "col_text", "col_mediumtext", "col_longtext"],
+            vec!["col_tinytext", "col_text", "col_mediumtext", "col_longtext", "updated_at"],
             vec![
-                vec![SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc"))],
+                vec![SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc")), SimpleString(s("abc")), DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -449,10 +449,10 @@ mod adapter_tests {
             &act[14],
             "15_string_05_enum",
             "id",
-            vec!["col_enum"],
+            vec!["col_enum", "updated_at"],
             vec![
-                vec![SimpleString(s("active"))],
-                vec![SimpleString(s("inactive"))]
+                vec![SimpleString(s("active")),   DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleString(s("inactive")), DateString(s("2023-09-01 12:34:56"))]
             ]
         );
 
@@ -460,12 +460,12 @@ mod adapter_tests {
             &act[15],
             "16_string_06_set",
             "id",
-            vec!["col_set"],
+            vec!["col_set", "updated_at"],
             vec![
-                vec![SimpleString(s("pc"))],
-                vec![SimpleString(s("phone"))],
-                vec![SimpleString(s("pc,phone"))],
-                vec![SimpleString(s("pc,phone"))]
+                vec![SimpleString(s("pc")),       DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleString(s("phone")),    DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleString(s("pc,phone")), DateString(s("2023-09-01 12:34:56"))],
+                vec![SimpleString(s("pc,phone")), DateString(s("2023-09-01 12:34:56"))]
             ]
         );
 
@@ -473,11 +473,11 @@ mod adapter_tests {
             &act[16],
             "17_string_07_json",
             "id",
-            vec!["col_json"],
+            vec!["col_json", "updated_at"],
             vec![
-                vec![JsonString(s(r#"{"id": 1, "name": "John"}"#))],
-                vec![JsonString(s(r#"[1, 2, "foo"]"#))],
-                vec![JsonString(s(r#"{"items": ["pc", "phone"], "option": {"id": 1}}"#))],
+                vec![JsonString(s(r#"{"id": 1, "name": "John"}"#)),                       DateString(s("2023-09-01 12:34:56"))],
+                vec![JsonString(s(r#"[1, 2, "foo"]"#)),                                   DateString(s("2023-09-01 12:34:56"))],
+                vec![JsonString(s(r#"{"items": ["pc", "phone"], "option": {"id": 1}}"#)), DateString(s("2023-09-01 12:34:56"))],
             ]
         );
 
@@ -485,7 +485,7 @@ mod adapter_tests {
             &act[17],
             "18_key_01_primary",
             "code",
-            vec![],
+            vec!["updated_at"],
             vec![]
         );
         
@@ -495,7 +495,7 @@ mod adapter_tests {
             &act[18],
             "20_key_03_unique_not_null",
             "code",
-            vec![],
+            vec!["updated_at"],
             vec![]
         );
 
@@ -503,7 +503,7 @@ mod adapter_tests {
             &act[19],
             "21_key_04_primary_primary",
             "code1-code2",
-            vec![],
+            vec!["updated_at"],
             vec![]
         );
 
@@ -511,7 +511,7 @@ mod adapter_tests {
             &act[20],
             "22_key_05_primary_unique",
             "code1",
-            vec!["code2"],
+            vec!["code2", "updated_at"],
             vec![]
         );
 
@@ -519,7 +519,7 @@ mod adapter_tests {
             &act[21],
             "23_key_06_primary_unique_not_null",
             "code1",
-            vec!["code2"],
+            vec!["code2", "updated_at"],
             vec![]
         );
 
@@ -529,7 +529,7 @@ mod adapter_tests {
             &act[22],
             "25_key_08_unique_not_null_unique",
             "code1",
-            vec!["code2"],
+            vec!["code2", "updated_at"],
             vec![]
         );
 
@@ -537,7 +537,7 @@ mod adapter_tests {
             &act[23],
             "26_key_09_unique_not_null_unique_not_null",
             "code1",
-            vec!["code2"],
+            vec!["code2", "updated_at"],
             vec![]
         );
         
@@ -549,7 +549,7 @@ mod adapter_tests {
             &act[24],
             "29_key_12_multi_unique_not_null_unique_not_null",
             "code1-code2",
-            vec![],
+            vec!["updated_at"],
             vec![]
         );
         
