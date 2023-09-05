@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use mysql::{Conn, Opts, OptsBuilder};
 use r2d2::ManageConnection;
 use r2d2_mysql::MysqlConnectionManager;
+use urlencoding::encode;
 
 pub type ProjectId = String;
 
@@ -53,6 +54,6 @@ impl Project {
     }
 
     pub fn create_url(&self) -> String {
-        format!("mysql://{}:{}@{}:{}/{}", self.user, self.password, self.host, self.port, self.schema)
+        format!("mysql://{}:{}@{}:{}/{}", encode(&self.user), encode(&self.password), encode(&self.host), encode(&self.port), encode(&self.schema))
     }
 }
