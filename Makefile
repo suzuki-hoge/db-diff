@@ -28,7 +28,7 @@ down:
 	@docker compose down --volumes
 
 db:
-	@sqlite3 ~/.db-diff/database-v0.2.0.sqlite
+	@sqlite3 ~/.db-diff/database-v0.2.1.sqlite
 
 mysql80:
 	@docker compose exec testdata-mysql80 mysql -h localhost -u user -ppassword testdata
