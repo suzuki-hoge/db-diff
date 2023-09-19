@@ -18,10 +18,10 @@ pub mod snapshot_result;
 pub fn migrate_sqlite_if_missing() -> anyhow::Result<()> {
     setup_dir()?;
 
-    let db = workspace_path("database-v0.2.1.sqlite")?;
+    let db = workspace_path("database-v0.2.2.sqlite")?;
 
     if !db.exists() {
-        logger::info("create database [ ~/.db-diff/database-v0.2.1.sqlite ]");
+        logger::info("create database [ ~/.db-diff/database-v0.2.2.sqlite ]");
 
         let conn = create_sqlite_connection()?;
 
@@ -40,14 +40,14 @@ pub fn migrate_sqlite_if_missing() -> anyhow::Result<()> {
 
         logger::info("migrate ok");
     } else {
-        logger::info("found database [ ~/.db-diff/database-v0.2.1.sqlite ]");
+        logger::info("found database [ ~/.db-diff/database-v0.2.2.sqlite ]");
     }
 
     Ok(())
 }
 
 pub fn create_sqlite_connection() -> anyhow::Result<SqliteConnection> {
-    let db = workspace_path("database-v0.2.1.sqlite")?;
+    let db = workspace_path("database-v0.2.2.sqlite")?;
 
     SqliteConnection::establish(db.to_str().unwrap()).map_err(|e| anyhow!(e))
 }
