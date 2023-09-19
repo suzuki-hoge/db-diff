@@ -1,21 +1,18 @@
 use std::collections::HashMap;
-use std::fs::{read_to_string, remove_file, File, OpenOptions};
-use std::io::Write;
 
-use anyhow::anyhow;
 use diesel::SqliteConnection;
-use itertools::Itertools;
 
 use crate::db::snapshot::{insert_snapshot_summary, insert_table_snapshots};
+use crate::db::snapshot_result::{insert_snapshot_result, update_snapshot_result};
 use crate::domain::dump_config::DumpConfig;
 use crate::domain::project::Project;
 use crate::domain::project::Rdbms::Mysql;
 use crate::domain::schema::TableName;
-use crate::domain::snapshot::{create_snapshot_id, SnapshotId, SnapshotName, SnapshotSummary, TableSnapshot};
+use crate::domain::snapshot::{SnapshotId, SnapshotName, SnapshotSummary, TableSnapshot};
+use crate::domain::snapshot_result::SnapshotResult;
 use crate::dump::adapter::TargetDbAdapter;
 use crate::dump::mysql80::TargetDbMysql80;
 use crate::logger;
-use crate::workspace::workspace_path;
 
 mod adapter;
 mod mysql80;
@@ -28,21 +25,27 @@ pub fn get_dump_configs(project: &Project) -> anyhow::Result<Vec<DumpConfig>> {
     adapter.get_dump_configs()
 }
 
-pub fn dump(conn: &SqliteConnection, project: &Project, snapshot_name: SnapshotName, dump_configs: &[DumpConfig]) -> anyhow::Result<SnapshotId> {
+pub fn dump(
+    conn: &SqliteConnection,
+    project: &Project,
+    snapshot_id: &SnapshotId,
+    snapshot_name: SnapshotName,
+    dump_configs: &[DumpConfig],
+) -> anyhow::Result<SnapshotResult> {
     let mut adapter = match &project.rdbms {
         Mysql => TargetDbMysql80::new(project),
     }?;
 
-    let snapshot_id = create_snapshot_id();
-
-    let snapshot_summary = SnapshotSummary::create(&snapshot_id, &snapshot_name);
+    let snapshot_summary = SnapshotSummary::create(snapshot_id, &snapshot_name);
     insert_snapshot_summary(conn, &project.project_id, &snapshot_summary)?;
 
     let dump_configs: HashMap<&TableName, &DumpConfig> = dump_configs.iter().map(|dump_config| (&dump_config.table_name, dump_config)).collect();
 
     let table_schemata = adapter.get_table_schemata()?;
 
-    init_process_status(table_schemata.len())?;
+    let mut last_percent = 0;
+    let mut snapshot_result = SnapshotResult::init(snapshot_id, table_schemata.len());
+    insert_snapshot_result(conn, &snapshot_result)?;
 
     for table_schema in table_schemata {
         let dump_config = dump_configs.get(&table_schema.table_name).unwrap();
@@ -50,6 +53,11 @@ pub fn dump(conn: &SqliteConnection, project: &Project, snapshot_name: SnapshotN
         if dump_config.value == "ignore" {
             logger::info(format!("ignore: {}", &table_schema.table_name));
 
+            snapshot_result.increment();
+            if last_percent != snapshot_result.percent {
+                update_snapshot_result(conn, &snapshot_result)?;
+            }
+            last_percent = snapshot_result.percent;
             continue;
         }
 
@@ -61,34 +69,19 @@ pub fn dump(conn: &SqliteConnection, project: &Project, snapshot_name: SnapshotN
             let (primary_col_name, col_names) = table_schema.get_all_col_names();
             table_snapshots.push(TableSnapshot::new(&table_schema.table_name, primary_col_name, col_names, row_snapshots));
 
-            append_process_status(&table_schema.table_name)?;
-        }
+            insert_table_snapshots(conn, snapshot_id, table_snapshots)?;
 
-        insert_table_snapshots(conn, &snapshot_id, table_snapshots)?;
+            snapshot_result.increment();
+            update_snapshot_result(conn, &snapshot_result)?;
+            if last_percent != snapshot_result.percent {
+                update_snapshot_result(conn, &snapshot_result)?;
+            }
+            last_percent = snapshot_result.percent;
+        }
     }
 
-    Ok(snapshot_id)
-}
+    snapshot_result.complete();
+    update_snapshot_result(conn, &snapshot_result)?;
 
-pub fn read_process_status() -> anyhow::Result<(usize, Vec<String>)> {
-    let lines = read_to_string(workspace_path("processing.txt")?)?;
-    let lines = lines.split('\n').into_iter().collect_vec();
-    let all = lines[0].parse().unwrap();
-    let lines = lines[1..].iter().filter(|line| !line.is_empty()).map(|line| line.to_string()).collect_vec();
-    Ok((all, lines))
-}
-
-fn init_process_status(all: usize) -> anyhow::Result<()> {
-    let path = workspace_path("processing.txt")?;
-    let _ = remove_file(&path);
-    let mut file = File::create(path)?;
-    file.write_all(format!("{all}\n").as_bytes())?;
-    file.flush().map_err(|e| anyhow!(e))
-}
-
-fn append_process_status(table_name: &TableName) -> anyhow::Result<()> {
-    let path = workspace_path("processing.txt")?;
-    let mut file = OpenOptions::new().append(true).create(true).open(path)?;
-    file.write_all(format!("{table_name}\n").as_bytes()).map_err(|e| anyhow!(e))?;
-    file.flush().map_err(|e| anyhow!(e))
+    Ok(snapshot_result)
 }

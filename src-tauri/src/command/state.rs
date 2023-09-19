@@ -7,12 +7,13 @@ use crate::domain::project::ProjectId;
 
 pub struct AppState {
     pub conn: Mutex<SqliteConnection>,
+    pub read_conn: Mutex<SqliteConnection>,
     pub project_id: Mutex<Option<ProjectId>>,
 }
 
 impl AppState {
     pub fn new() -> anyhow::Result<Self> {
-        Ok(Self { conn: Mutex::new(create_sqlite_connection()?), project_id: Mutex::new(None) })
+        Ok(Self { conn: Mutex::new(create_sqlite_connection()?), read_conn: Mutex::new(create_sqlite_connection()?), project_id: Mutex::new(None) })
     }
 
     pub fn set_project_id(&self, selected_project_id: ProjectId) {

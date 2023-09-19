@@ -7,8 +7,10 @@ use crate::command::state::AppState;
 use crate::db::dump_config::insert_dump_configs;
 use crate::db::project::all_projects;
 use crate::db::snapshot::{all_snapshot_summaries, delete_snapshot_summary, update_snapshot_summary};
+use crate::db::snapshot_result::{find_snapshot_result, update_snapshot_result};
 use crate::domain::snapshot::{SnapshotId, SnapshotName, SnapshotSummary};
-use crate::dump::{dump, read_process_status};
+use crate::domain::snapshot_result::SnapshotResult;
+use crate::dump::dump;
 use crate::logger;
 
 #[derive(Serialize, Deserialize)]
@@ -69,6 +71,7 @@ pub async fn delete_snapshot_summary_command(app_state: State<'_, AppState>, sna
 #[tauri::command]
 pub async fn dump_snapshot_command(
     app_state: State<'_, AppState>,
+    snapshot_id: SnapshotId,
     snapshot_name: SnapshotName,
     dump_config_jsons: Vec<DumpConfigJson>,
 ) -> Result<(), String> {
@@ -83,24 +86,39 @@ pub async fn dump_snapshot_command(
 
     let dump_configs = dump_config_jsons.into_iter().map(|dump_config_json| dump_config_json.into()).collect_vec();
 
-    let snapshot_id = dump(&conn, project, snapshot_name, &dump_configs).map_err(|e| e.to_string())?;
+    match dump(&conn, project, &snapshot_id, snapshot_name, &dump_configs) {
+        Ok(snapshot_result) => {
+            insert_dump_configs(&conn, project_id, &snapshot_result.snapshot_id, &dump_configs).map_err(|e| e.to_string())?;
 
-    insert_dump_configs(&conn, project_id, &snapshot_id, &dump_configs).map_err(|e| e.to_string())?;
+            logger::info("end   dump_snapshot_command");
 
-    logger::info("end   dump_snapshot_command");
-
-    Ok(())
+            Ok(())
+        }
+        Err(e) => {
+            update_snapshot_result(&conn, &SnapshotResult::failed(&snapshot_id)).map_err(|e| e.to_string())?;
+            Err(e.to_string())
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ProcessingStatusJson {
-    pub all: usize,
-    pub lines: Vec<String>,
+pub struct SnapshotResultJson {
+    pub percent: usize,
+    pub done: usize,
+    pub total: usize,
+    pub status: String,
 }
 
 #[tauri::command]
-pub async fn get_snapshot_processing_status() -> Result<ProcessingStatusJson, String> {
-    let (all, lines) = read_process_status().map_err(|e| e.to_string())?;
-    Ok(ProcessingStatusJson { all, lines })
+pub async fn get_snapshot_result_command(app_state: State<'_, AppState>, snapshot_id: SnapshotId) -> Result<SnapshotResultJson, String> {
+    let read_conn = app_state.read_conn.lock().unwrap();
+
+    let snapshot_result = find_snapshot_result(&read_conn, &snapshot_id).map_err(|e| e.to_string())?;
+    Ok(SnapshotResultJson {
+        percent: snapshot_result.percent,
+        done: snapshot_result.done,
+        total: snapshot_result.total,
+        status: snapshot_result.status,
+    })
 }

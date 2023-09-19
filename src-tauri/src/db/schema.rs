@@ -33,6 +33,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    snapshot_results (snapshot_id) {
+        snapshot_id -> Text,
+        percent -> Integer,
+        done -> Integer,
+        total -> Integer,
+        status -> Text,
+    }
+}
+
+diesel::table! {
     table_snapshots (snapshot_id, table_name) {
         snapshot_id -> Text,
         table_name -> Text,

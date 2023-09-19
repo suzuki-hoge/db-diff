@@ -28,7 +28,7 @@ fn main() -> anyhow::Result<()> {
             command::snapshot::update_snapshot_summary_command,
             command::snapshot::delete_snapshot_summary_command,
             command::snapshot::dump_snapshot_command,
-            command::snapshot::get_snapshot_processing_status,
+            command::snapshot::get_snapshot_result_command,
             command::diff::find_snapshot_diff_command,
             command::diff::create_snapshot_diff_command,
         ])

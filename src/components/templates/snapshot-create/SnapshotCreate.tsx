@@ -8,7 +8,7 @@ import { type DumpConfig } from '../../../types'
 
 interface Props {
   dumpConfigs: DumpConfig[]
-  dump: (snapshotName: string, dumpConfigs: DumpConfig[]) => void
+  dump: (snapshotId: string, snapshotName: string, dumpConfigs: DumpConfig[]) => void
 }
 
 export const SnapshotCreate: FC<Props> = (props) => {

@@ -24,6 +24,17 @@ create table snapshot_summaries
     foreign key (project_id) references projects (project_id) on delete cascade
 );
 
+create table snapshot_results
+(
+    snapshot_id text not null,
+    percent     integer,
+    done        integer,
+    total       integer,
+    status      text not null,
+    primary key (snapshot_id),
+    foreign key (snapshot_id) references snapshot_summaries (snapshot_id) on delete cascade
+);
+
 create table dump_configs
 (
     snapshot_id text not null,

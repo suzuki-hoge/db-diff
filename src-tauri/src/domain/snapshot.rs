@@ -4,7 +4,6 @@ use std::collections::BTreeSet;
 use chrono::Local;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::domain::schema::{ColName, Hash, PrimaryColName, PrimaryValue, TableName};
 use crate::domain::snapshot::ColValue::*;
@@ -13,8 +12,9 @@ pub type SnapshotId = String;
 
 pub type SnapshotName = String;
 
+#[cfg(test)]
 pub fn create_snapshot_id() -> SnapshotId {
-    Uuid::new_v4().to_string()
+    uuid::Uuid::new_v4().to_string()
 }
 
 #[derive(Eq, PartialEq, Debug)]

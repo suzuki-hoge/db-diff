@@ -148,7 +148,7 @@ mod adapter_tests {
     use crate::domain::dump_config::DumpConfig;
     use crate::domain::project::{create_project_id, Project};
     use crate::domain::project::Rdbms::Mysql;
-    use crate::domain::snapshot::{ColValue, TableSnapshot};
+    use crate::domain::snapshot::{ColValue, create_snapshot_id, TableSnapshot};
     use crate::domain::snapshot::ColValue::*;
     use crate::dump::adapter::TargetDbAdapter;
     use crate::dump::dump;
@@ -281,8 +281,9 @@ mod adapter_tests {
         let project_id = create_project_id();
         let project = Project::new(&project_id, "testdata-mysql80", "red", Mysql, "user", "password", "localhost", "19001", "testdata");
         insert_project(&conn, &project)?;
-        
-        let snapshot_id = dump(&conn, &project, "test dump".to_string(), &adapter.get_dump_configs()?)?;
+
+        let snapshot_id = create_snapshot_id();
+        dump(&conn, &project, &snapshot_id, "test dump".to_string(), &adapter.get_dump_configs()?)?;
         
         let act = find_table_snapshots(&conn, &snapshot_id)?;
         

@@ -14,6 +14,8 @@ export interface Project {
   schema: string
 }
 
+export const createSnapshotId: () => string = () => v4()
+
 export interface SnapshotSummary {
   snapshotId: string
   snapshotName: string

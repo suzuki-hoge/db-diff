@@ -13,6 +13,7 @@ pub mod dump_config;
 pub mod project;
 pub mod schema;
 pub mod snapshot;
+pub mod snapshot_result;
 
 pub fn migrate_sqlite_if_missing() -> anyhow::Result<()> {
     setup_dir()?;

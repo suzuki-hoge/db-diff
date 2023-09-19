@@ -1,6 +1,6 @@
 import React, { type FC, useState } from 'react'
 import styles from './SnapshotInput.module.scss'
-import { type DumpConfig, type SnapshotSummary } from '../../../types'
+import { createSnapshotId, type DumpConfig, type SnapshotSummary } from '../../../types'
 import { Button } from '../../atoms/button/Button'
 import { LabeledInputText } from '../../molecules/labeled-input-text/LabeledInputText'
 import { z } from 'zod'
@@ -10,7 +10,7 @@ import { IconVExpand } from '../../atoms/icon-v-expand/IconVExpand'
 interface Props {
   snapshotSummary?: SnapshotSummary
   dumpConfigs: DumpConfig[]
-  dump?: (snapshotName: string, dumpConfigs: DumpConfig[]) => void
+  dump?: (snapshotId: string, snapshotName: string, dumpConfigs: DumpConfig[]) => void
   update?: (snapshotSummary: SnapshotSummary) => void
 }
 
@@ -89,12 +89,13 @@ export const SnapshotInput: FC<Props> = (props) => {
               }
             } else {
               if (props.dump != null) {
+                const snapshotId = createSnapshotId()
                 const dumpConfigs: DumpConfig[] = props.dumpConfigs.map((dumpConfig, i) => ({
                   tableName: dumpConfig.tableName,
                   colNames: dumpConfig.colNames,
                   value: dumpConfigValues[i],
                 }))
-                props.dump(snapshotName, dumpConfigs)
+                props.dump(snapshotId, snapshotName, dumpConfigs)
               }
             }
           }

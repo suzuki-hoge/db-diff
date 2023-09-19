@@ -20,8 +20,12 @@ export const SnapshotCreatePage: FC = () => {
       })
   }, [location])
 
-  const dump: (snapshotName: string, dumpConfigs: DumpConfig[]) => void = (snapshotName: string, dumpConfigs: DumpConfig[]) => {
-    invoke('dump_snapshot_command', { snapshotName, dumpConfigJsons: dumpConfigs })
+  const dump: (snapshotId: string, snapshotName: string, dumpConfigs: DumpConfig[]) => void = (
+    snapshotId: string,
+    snapshotName: string,
+    dumpConfigs: DumpConfig[]
+  ) => {
+    invoke('dump_snapshot_command', { snapshotId, snapshotName, dumpConfigJsons: dumpConfigs })
       .then(() => {
         navigate('/snapshot-summary/list')
       })
@@ -30,27 +34,22 @@ export const SnapshotCreatePage: FC = () => {
         navigate('/error', { state: { message: e } })
       })
 
-    const toastId = toast.loading('保存中...')
-    setTimeout(() => {
-      watch(toastId, 0)
-    }, 500)
+    watch(snapshotId, -1)
   }
 
   return dumpConfigs.length !== 0 ? <SnapshotCreate dumpConfigs={dumpConfigs} dump={dump} /> : <></>
 }
 
-function watch(toastId: string, last: number): void {
-  invoke<{ all: number; lines: string[] }>('get_snapshot_processing_status')
+function watch(snapshotId: string, lastPercent: number): void {
+  invoke<{ percent: number; done: number; total: number; status: string }>('get_snapshot_result_command', { snapshotId })
     .then((data) => {
-      data.lines.slice(last).forEach((line) => {
-        toast.success(line, { id: toastId })
-      })
-      if (data.all !== data.lines.length) {
+      if (lastPercent !== data.percent) {
+        toast.success(`${data.percent}% done.`)
+      }
+      if (data.status === 'queued' || data.status === 'processing') {
         setTimeout(() => {
-          watch(toastId, data.lines.length)
-        }, 10)
-      } else {
-        toast.success('保存しました', { id: toastId })
+          watch(snapshotId, data.percent)
+        }, 300)
       }
     })
     .catch(() => {
